@@ -13,6 +13,10 @@ public class JevaR implements Runnable {
     protected static HashMap<String, JevaScript> jevascriptLibrary;
     private HashMap<String, JevaScript> jevascriptHeirarchy;
 
+    protected static HashMap<String, JevaGraphic> jevagraphicLibrary;
+    protected static HashMap<String, JevaSpriteSheet> jevaspritesheetLibrary;
+    protected static HashMap<String, JevaSound> jevasoundLibrary;
+
     private Thread gameThread;
     private boolean isRunning;
 
@@ -29,6 +33,9 @@ public class JevaR implements Runnable {
         jevaclipHeirarchy = new HashMap<>();
         jevascriptLibrary = new HashMap<>();
         jevascriptHeirarchy = new HashMap<>();
+        jevagraphicLibrary = new HashMap<>();
+        jevaspritesheetLibrary = new HashMap<>();
+        jevasoundLibrary = new HashMap<>();
 
         isRunning = false;
         this.fps = fps;
@@ -38,6 +45,51 @@ public class JevaR implements Runnable {
     }
 
     // creating library jobtives
+
+    public void createGraphic(String _label, String fileName) {
+        if (jevagraphicLibrary.get(_label) != null)
+            return;
+
+        if (fileName.isEmpty())
+            return;
+
+        // add JevaGraphic to game engine
+        JevaGraphic graphic = new JevaGraphic(fileName);
+        jevagraphicLibrary.put(_label, graphic);
+    }
+
+    public void createSpriteSheet(String _label, JevaScript _init) {
+        if (jevaspritesheetLibrary.get(_label) != null)
+            return;
+
+        // add JevaSpriteSheet to game engine
+        JevaSpriteSheet spritesheet = new JevaSpriteSheet(_init);
+        jevaspritesheetLibrary.put(_label, spritesheet);
+    }
+
+
+
+    public void createSound(String _label, String fileName) {
+        if (jevasoundLibrary.get(_label) != null)
+            return;
+        
+        if(fileName.isEmpty())
+            return;
+        
+        // add JevaSound to game engine
+        JevaSound sound = new JevaSound(fileName);
+        jevasoundLibrary.put(_label, sound);
+    }
+
+    public JevaSound getSound(String _label) {
+        JevaSound sound = jevasoundLibrary.get(_label);
+
+        if(sound == null)
+            return null;
+        
+        return sound;
+    }
+
     public void createJevascript(String _label, JevaScript script) {
         if (jevascriptLibrary.get(_label) != null)
             return;
@@ -56,11 +108,11 @@ public class JevaR implements Runnable {
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
     }
-    
+
     public void createJevaclip(String _label, double _x, double _y, double _width, double _height, String _scriptName) {
         if (jevaclipLibrary.get(_label) != null)
             return;
-        
+
         JevaScript script = jevascriptLibrary.get(_scriptName);
         if (script == null)
             return;
@@ -71,7 +123,7 @@ public class JevaR implements Runnable {
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
     }
-    
+
     public void createJevaclip(String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
         if (jevaclipLibrary.get(_label) != null)
             return;
@@ -187,14 +239,14 @@ public class JevaR implements Runnable {
         screen.clearScreen();
 
         // get context
-        Graphics context = screen.getContext();
-        Graphics2D ctx = (Graphics2D) context;
+        Graphics2D ctx = screen.getContext();
 
         jevaclipHeirarchy.forEach((key, jevaclip) -> {
             jevaclip.render(ctx);
         });
 
-        context.dispose();
+        screen.drawScreen();
+        ctx.dispose();
     }
 
 }

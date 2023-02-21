@@ -9,4 +9,12 @@ public class JevaUtils {
 
         return uuidAsString;
     }
+
+    public static int roundInt(double val) {
+        return (int) Math.round(val);
+    }
+
+    public static double roundDouble(double val) {
+        return Math.round(val);
+    }
 }

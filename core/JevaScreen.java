@@ -3,12 +3,15 @@ package core;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*; // need this to respond to GUI events
+import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
 public class JevaScreen extends JFrame implements KeyListener {
     private JPanel gamePanel;
     private Container gameContainer;
+
+    private BufferedImage offscreenCanvas;
 
     private Color backgroundColor;
 
@@ -17,6 +20,9 @@ public class JevaScreen extends JFrame implements KeyListener {
         setSize(_width, _height);
 
         backgroundColor = new Color(0, 128, 0);
+        backgroundColor = Color.WHITE;
+
+        offscreenCanvas = new BufferedImage (_width, _height, BufferedImage.TYPE_INT_RGB);
 
         // create game panel
 
@@ -37,20 +43,24 @@ public class JevaScreen extends JFrame implements KeyListener {
         gamePanel.requestFocus();
     }
 
-    public Graphics getContext() {
-        return gamePanel.getGraphics();
+    public Graphics2D getContext() {
+        return (Graphics2D) offscreenCanvas.getGraphics();
     }
 
+    public void drawScreen() {
+        Graphics2D g2 = (Graphics2D) gamePanel.getGraphics();
+        g2.drawImage(offscreenCanvas, 0, 0, null);
+        g2.dispose();
+    }
     public void clearScreen() {
-        Graphics context = gamePanel.getGraphics();
-        Graphics2D ctx = (Graphics2D) context;
+        Graphics2D ctx = (Graphics2D) offscreenCanvas.getGraphics();
 
         Rectangle2D.Double screenBackground = new Rectangle2D.Double(0, 0, gamePanel.getWidth(), gamePanel.getHeight());
 
         ctx.setColor(backgroundColor);
         ctx.fill(screenBackground);
 
-        context.dispose();
+        ctx.dispose();
     }
 
     public void keyTyped(KeyEvent e) {
