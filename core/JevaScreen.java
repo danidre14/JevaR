@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
-public class JevaScreen extends JFrame implements KeyListener {
+public class JevaScreen extends JFrame implements KeyListener, MouseListener, MouseMotionListener {
     private JPanel gamePanel;
     private Container gameContainer;
 
@@ -22,7 +22,7 @@ public class JevaScreen extends JFrame implements KeyListener {
         backgroundColor = new Color(0, 128, 0);
         backgroundColor = Color.WHITE;
 
-        offscreenCanvas = new BufferedImage (_width, _height, BufferedImage.TYPE_INT_RGB);
+        offscreenCanvas = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
 
         // create game panel
 
@@ -30,6 +30,8 @@ public class JevaScreen extends JFrame implements KeyListener {
         gamePanel.setPreferredSize(new Dimension(_width, _height));
         gamePanel.setBackground(backgroundColor);
 
+        gamePanel.addMouseListener(this);
+        gamePanel.addMouseMotionListener(this);
         gamePanel.addKeyListener(this);
 
         gameContainer = getContentPane();
@@ -52,6 +54,7 @@ public class JevaScreen extends JFrame implements KeyListener {
         g2.drawImage(offscreenCanvas, 0, 0, null);
         g2.dispose();
     }
+
     public void clearScreen() {
         Graphics2D ctx = (Graphics2D) offscreenCanvas.getGraphics();
 
@@ -95,7 +98,7 @@ public class JevaScreen extends JFrame implements KeyListener {
             JevaKey._keysList.put(keyCode, JevaKey._keyStates.nil);
         if (JevaKey._keysList.get(keyName) == JevaKey._keyStates.down)
             JevaKey._keysList.put(keyName, JevaKey._keyStates.nil);
-        
+
         if (JevaKey._keysPressed.get(keyCode) != JevaKey._keyStates.nil) {
             if ((JevaKey._keysPressed.get(keyCode) == JevaKey._keyStates.up
                     || JevaKey._keysPressed.get(keyCode) == JevaKey._keyStates.down)
@@ -114,5 +117,90 @@ public class JevaScreen extends JFrame implements KeyListener {
             }
             JevaKey._keysPressed.put(keyName, JevaKey._keyStates.nil);
         }
+    }
+
+    // implement methods in MouseListener interface
+
+    public void mouseClicked(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+
+        JevaMouse.setMouseCoords(x, y);
+    }
+
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
+
+    public void mousePressed(MouseEvent e) {
+        int code = e.getButton();
+        String mouseCode = "code_" + code;
+        String mouseName = code == MouseEvent.BUTTON1 ? "name_left"
+                : code == MouseEvent.BUTTON2 ? "name_middle" : code == MouseEvent.BUTTON3 ? "name_right" : "name_nil";
+
+        System.out.println("Mouse being pressed- Code: " + mouseCode + " Text: " + mouseName);
+
+        if (JevaMouse._mouseList.get(mouseCode) == JevaMouse._mouseStates.nil
+                || JevaMouse._mouseList.get(mouseCode) == null)
+            JevaMouse._mouseList.put(mouseCode, JevaMouse._mouseStates.down);
+        if (JevaMouse._mouseList.get(mouseName) == JevaMouse._mouseStates.nil
+                || JevaMouse._mouseList.get(mouseName) == null)
+            JevaMouse._mouseList.put(mouseName, JevaMouse._mouseStates.down);
+
+        if (JevaMouse._mousePressed.get(mouseCode) == JevaMouse._mouseStates.nil
+                || JevaMouse._mousePressed.get(mouseCode) == null)
+            JevaMouse._mousePressed.put(mouseCode, JevaMouse._mouseStates.down);
+        if (JevaMouse._mousePressed.get(mouseName) == JevaMouse._mouseStates.nil
+                || JevaMouse._mousePressed.get(mouseName) == null)
+            JevaMouse._mousePressed.put(mouseName, JevaMouse._mouseStates.down);
+    }
+
+    public void mouseReleased(MouseEvent e) {
+        int code = e.getButton();
+        String mouseCode = "code_" + code;
+        String mouseName = code == MouseEvent.BUTTON1 ? "name_left"
+                : code == MouseEvent.BUTTON2 ? "name_middle" : code == MouseEvent.BUTTON3 ? "name_right" : "name_nil";
+
+        if (JevaMouse._mouseList.get(mouseCode) == JevaMouse._mouseStates.down)
+            JevaMouse._mouseList.put(mouseCode, JevaMouse._mouseStates.nil);
+        if (JevaMouse._mouseList.get(mouseName) == JevaMouse._mouseStates.down)
+            JevaMouse._mouseList.put(mouseName, JevaMouse._mouseStates.nil);
+
+        if (JevaMouse._mousePressed.get(mouseCode) != JevaMouse._mouseStates.nil) {
+            if ((JevaMouse._mousePressed.get(mouseCode) == JevaMouse._mouseStates.up
+                    || JevaMouse._mousePressed.get(mouseCode) == JevaMouse._mouseStates.down)
+                    && (JevaMouse._mouseReleased.get(mouseCode) == JevaMouse._mouseStates.nil
+                            || JevaMouse._mouseReleased.get(mouseCode) == null)) {
+                JevaMouse._mouseReleased.put(mouseCode, JevaMouse._mouseStates.down);
+            }
+            JevaMouse._mousePressed.put(mouseCode, JevaMouse._mouseStates.nil);
+        }
+        if (JevaMouse._mousePressed.get(mouseName) != JevaMouse._mouseStates.nil) {
+            if ((JevaMouse._mousePressed.get(mouseName) == JevaMouse._mouseStates.up
+                    || JevaMouse._mousePressed.get(mouseName) == JevaMouse._mouseStates.down)
+                    && (JevaMouse._mouseReleased.get(mouseName) == JevaMouse._mouseStates.nil
+                            || JevaMouse._mouseReleased.get(mouseName) == null)) {
+                JevaMouse._mouseReleased.put(mouseName, JevaMouse._mouseStates.down);
+            }
+            JevaMouse._mousePressed.put(mouseName, JevaMouse._mouseStates.nil);
+        }
+    }
+    // implement methods in MouseMotionListener interface
+
+    public void mouseMoved(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+
+        JevaMouse.setMouseCoords(x, y);
+    }
+
+    public void mouseDragged(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+
+        JevaMouse.setMouseCoords(x, y);
     }
 }

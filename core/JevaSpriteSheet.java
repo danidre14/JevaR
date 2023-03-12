@@ -37,9 +37,6 @@ public class JevaSpriteSheet {
 
         totalDuration += duration;
         frames.add(new AnimFrame(source, totalDuration));
-
-        System.out.println("Adding frame");
-        System.out.println(source);
     }
 
     /**

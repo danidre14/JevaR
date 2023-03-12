@@ -3,17 +3,11 @@ package core;
 import java.util.*;
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 
 public class JevaClip {
     private String _label;
     public double _x, _y, _width, _height;
-
-    private enum appearances {
-        painting, graphic, spritesheet
-    }
-
-    private appearances appearanceType;
-    private Object appearanceSource;
 
     private boolean isLoaded;
 
@@ -36,9 +30,6 @@ public class JevaClip {
         this._width = _width;
         this._height = _height;
 
-        appearanceType = appearances.painting;
-        appearanceSource = null;
-
         _onLoadScripts = onLoads;
         isLoaded = false;
 
@@ -55,31 +46,6 @@ public class JevaClip {
     }
 
     // adding jobtives
-    public void useGraphic(String _label) {
-        JevaGraphic graphic = JevaR.jevagraphicLibrary.get(_label);
-
-        if (graphic == null)
-            return;
-
-        Image source = graphic.getSource();
-
-        appearanceType = appearances.graphic;
-        appearanceSource = source;
-    }
-
-    public void useSpriteSheet(String _label) {
-        JevaSpriteSheet source = JevaR.jevaspritesheetLibrary.get(_label);
-
-        if (source == null)
-            return;
-
-        source.reset();
-
-        appearanceType = appearances.spritesheet;
-        appearanceSource = source;
-        System.out.println(source);
-        System.out.println("Use Sprite Sheet");
-    }
 
     public void addJevascript(String _label) {
         JevaScript script = JevaR.jevascriptLibrary.get(_label);
@@ -99,10 +65,6 @@ public class JevaClip {
         for (JevaScript script : _scriptsList) {
             script.call(this);
         }
-        if (appearanceType == appearances.spritesheet) {
-            JevaSpriteSheet spritesheet = (JevaSpriteSheet) appearanceSource;
-            spritesheet.tick();
-        }
     }
 
     protected void render(Graphics2D ctx) {
@@ -110,24 +72,74 @@ public class JevaClip {
         int _y = JevaUtils.roundInt(this._y);
         int _width = JevaUtils.roundInt(this._width);
         int _height = JevaUtils.roundInt(this._height);
+        int w = Math.max(Math.abs(_width), 1);
+        int h = Math.max(Math.abs(_height), 1);
+        int x = _width >= 0 ? _x : _x - w;
+        int y = _height >= 0 ? _y : _y - h;
 
-        if (appearanceType == appearances.graphic) {
-            Image source = (Image) appearanceSource;
-            ctx.drawImage(source, _x, _y, _width, _height, null);
-        } else if (appearanceType == appearances.spritesheet) {
-            Image source = ((JevaSpriteSheet) appearanceSource).getSource();
-            ctx.drawImage(source, _x, _y, _width, _height, null);
-        } else {
-            Rectangle2D.Double body = new Rectangle2D.Double(_x, _y, _width, _height);
-            Rectangle2D.Double rec1 = new Rectangle2D.Double(_x + (_width * 2 / 5), _y, (_width / 5), _height);
-            Rectangle2D.Double rec2 = new Rectangle2D.Double(_x, _y + (_height * 2 / 5), _width, (_height / 5));
+        BufferedImage painting = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 
-            ctx.setColor(Color.GRAY);
-            ctx.fill(body);
-
-            ctx.setColor(Color.DARK_GRAY);
-            ctx.fill(rec1);
-            ctx.fill(rec2);
+        AffineTransform at = new AffineTransform();
+        if (_width < 0) {
+            at.scale(-1, 1);
+            at.translate(_width, 0);
         }
+        if (_height < 0) {
+            at.scale(1, -1);
+            at.translate(0, _height);
+        }
+
+        Graphics2D pCtx = (Graphics2D) painting.getGraphics();
+        pCtx.transform(at);
+        int px = 0;
+        int py = 0;
+        Rectangle2D.Double body = new Rectangle2D.Double(px, py, w, h);
+        Rectangle2D.Double rec1 = new Rectangle2D.Double(px + (w * 3 / 5), py, (w / 5), h);
+        Rectangle2D.Double rec2 = new Rectangle2D.Double(px, py + (h * 2 / 5), w, (h / 5));
+
+        pCtx.setColor(Color.GRAY);
+        pCtx.fill(body);
+
+        pCtx.setColor(Color.DARK_GRAY);
+        pCtx.fill(rec1);
+        pCtx.fill(rec2);
+
+        ctx.drawImage(painting, x, y, null);
+        pCtx.dispose();
+    }
+
+    private Rectangle2D.Double getBoundingRectangle() {
+        return new Rectangle2D.Double(_x, _y, _width, _height);
+    }
+
+    public boolean hitTest(JevaClip other) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+        Rectangle2D.Double otherRect = other.getBoundingRectangle();
+
+        return thisRect.intersects(otherRect);
+    }
+
+    public boolean hitTest(Rectangle2D.Double targetRect) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+
+        return thisRect.intersects(targetRect);
+    }
+
+    public boolean hitTest(int x, int y) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+        return thisRect.contains(x, y);
+    }
+
+    public boolean hitTest(String _label) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+        for (JevaClip jevaclip : JevaR.jevaclipHeirarchy.values()) {
+            if (jevaclip._label.equals(_label) && jevaclip != this) {
+                Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
+                if (thisRect.intersects(otherClipsRect)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
