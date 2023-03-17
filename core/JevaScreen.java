@@ -13,7 +13,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
 
     private BufferedImage offscreenCanvas;
 
-    private Color backgroundColor;
+    protected Color backgroundColor;
 
     public JevaScreen(int _width, int _height) {
         setTitle("A JevaR Application");
@@ -46,7 +46,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
     }
 
     public Graphics2D getContext() {
-        return (Graphics2D) offscreenCanvas.getGraphics();
+        return offscreenCanvas.createGraphics();
     }
 
     public void drawScreen() {
@@ -56,11 +56,12 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
     }
 
     public void clearScreen() {
-        Graphics2D ctx = (Graphics2D) offscreenCanvas.getGraphics();
+        Graphics2D ctx = offscreenCanvas.createGraphics();
 
         Rectangle2D.Double screenBackground = new Rectangle2D.Double(0, 0, gamePanel.getWidth(), gamePanel.getHeight());
 
-        ctx.setColor(backgroundColor);
+        ctx.setColor(Color.BLACK);
+        // ctx.setColor(backgroundColor);
         ctx.fill(screenBackground);
 
         ctx.dispose();

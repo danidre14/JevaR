@@ -12,18 +12,18 @@ public class JevaText extends JevaClip {
     public int _fontSize;
     public String _fontFamily;
 
-    protected JevaText(String _label, String _text, double _x, double _y, double _width, double _height) {
-        this(_label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height) {
+        this(parent, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaText(String _label, String _text, double _x, double _y, double _width, double _height,
+    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height,
             JevaScript onLoad) {
-        this(_label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+        this(parent, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaText(String _label, String _text, double _x, double _y, double _width, double _height,
+    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
-        super(_label, _x, _y, _width, _height, onLoads);
+        super(parent, _label, _x, _y, _width, _height, onLoads);
 
         this._text = _text;
         this._fontColor = Color.WHITE;
@@ -33,29 +33,29 @@ public class JevaText extends JevaClip {
     }
 
     // public String getFontFamily() {
-    //     return _fontFamily;
+    // return _fontFamily;
     // }
 
     // public Color getFontColor() {
-    //     return _fontColor;
+    // return _fontColor;
     // }
 
     // public double getFontSize() {
-    //     return _fontSize;
+    // return _fontSize;
     // }
 
     // public void setFontFamily(String _fontFamily) {
-    //     this._fontFamily = _fontFamily;
+    // this._fontFamily = _fontFamily;
     // }
 
     // public void setFontColor(Color color) {
-    //     this._fontColor = color;
+    // this._fontColor = color;
     // }
 
     // public void setFontSize(int size) {
-    //     if (size < 8)
-    //         size = 8;
-    //     this._fontSize = size;
+    // if (size < 8)
+    // size = 8;
+    // this._fontSize = size;
     // }
 
     protected void tick() {
@@ -68,8 +68,10 @@ public class JevaText extends JevaClip {
     protected void render(Graphics2D ctx) {
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
-        int _width = JevaUtils.roundInt(this._width);
-        int _height = JevaUtils.roundInt(this._height);
+        int _width = JevaUtils.roundInt(this._width * this._scaleX);
+        int _height = JevaUtils.roundInt(this._height * this._scaleY);
+        int offsetX = JevaUtils.roundInt(this._anchorX * _width);
+        int offsetY = JevaUtils.roundInt(this._anchorY * _height);
         int w = Math.max(Math.abs(_width), 1);
         int h = Math.max(Math.abs(_height), 1);
         int x = _width >= 0 ? _x : _x - w;
@@ -101,7 +103,13 @@ public class JevaText extends JevaClip {
         pCtx.setFont(new Font(_fontFamily, Font.PLAIN, (int) Math.max(8, _fontSize)));
         pCtx.drawString(_text, px, py + _fontSize);
 
-        ctx.drawImage(painting, x, y, null);
+        ctx.drawImage(painting, x - offsetX, y - offsetY, null);
         pCtx.dispose();
+
+        Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
+        ctx.setColor(Color.BLUE);
+        ctx.fill(anchor);
+        ctx.setColor(Color.ORANGE);
+        ctx.drawRect(_x - JevaUtils.roundInt(this._anchorX * this._width), _y - JevaUtils.roundInt(this._anchorY * this._height), (int)this._width, (int) this._height);
     }
 }

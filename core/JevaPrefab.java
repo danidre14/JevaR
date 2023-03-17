@@ -10,46 +10,54 @@ public class JevaPrefab extends JevaClip {
         painting, graphic, spritesheet
     }
 
+    private String appearanceName;
     private appearances appearanceType;
     private Object appearanceSource;
 
-    protected JevaPrefab(String _label, double _x, double _y, double _width, double _height) {
-        this(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height) {
+        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaPrefab(String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
-        this(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
+        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaPrefab(String _label, double _x, double _y, double _width, double _height,
+    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
-        super(_label, _x, _y, _width, _height, onLoads);
+        super(parent, _label, _x, _y, _width, _height, onLoads);
 
+        appearanceName = "default";
         appearanceType = appearances.painting;
         appearanceSource = null;
     }
 
     // adding jobtives
     public void useGraphic(String _label) {
-        JevaGraphic graphic = JevaR.jevagraphicLibrary.get(_label);
+        if (appearanceName.equals(_label) && appearanceType == appearances.graphic)
+            return;
+        JevaGraphic graphic = parent.jevagraphicLibrary.get(_label);
 
         if (graphic == null)
             return;
 
         Image source = graphic.getSource();
 
+        appearanceName = _label;
         appearanceType = appearances.graphic;
         appearanceSource = source;
     }
 
     public void useSpriteSheet(String _label) {
-        JevaSpriteSheet source = JevaR.jevaspritesheetLibrary.get(_label);
+        if (appearanceName.equals(_label) && appearanceType == appearances.spritesheet)
+            return;
+        JevaSpriteSheet source = parent.jevaspritesheetLibrary.get(_label);
 
         if (source == null)
             return;
 
         source.reset();
 
+        appearanceName = _label;
         appearanceType = appearances.spritesheet;
         appearanceSource = source;
     }
@@ -68,8 +76,10 @@ public class JevaPrefab extends JevaClip {
     protected void render(Graphics2D ctx) {
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
-        int _width = JevaUtils.roundInt(this._width);
-        int _height = JevaUtils.roundInt(this._height);
+        int _width = JevaUtils.roundInt(this._width * this._scaleX);
+        int _height = JevaUtils.roundInt(this._height * this._scaleY);
+        int offsetX = JevaUtils.roundInt(this._anchorX * _width);
+        int offsetY = JevaUtils.roundInt(this._anchorY * _height);
         int w = Math.max(Math.abs(_width), 1);
         int h = Math.max(Math.abs(_height), 1);
         int x = _width >= 0 ? _x : _x - w;
@@ -77,10 +87,10 @@ public class JevaPrefab extends JevaClip {
 
         if (appearanceType == appearances.graphic) {
             Image source = (Image) appearanceSource;
-            ctx.drawImage(source, _x, _y, _width, _height, null);
+            ctx.drawImage(source, _x - offsetX, _y - offsetY, _width, _height, null);
         } else if (appearanceType == appearances.spritesheet) {
             Image source = ((JevaSpriteSheet) appearanceSource).getSource();
-            ctx.drawImage(source, _x, _y, _width, _height, null);
+            ctx.drawImage(source, _x - offsetX, _y - offsetY, _width, _height, null);
         } else {
             BufferedImage painting = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 
@@ -109,8 +119,13 @@ public class JevaPrefab extends JevaClip {
             pCtx.fill(rec1);
             pCtx.fill(rec2);
 
-            ctx.drawImage(painting, x, y, null);
+            ctx.drawImage(painting, x - offsetX, y - offsetY, null);
             pCtx.dispose();
         }
+        ctx.setColor(Color.ORANGE);
+        ctx.drawRect(x - offsetX, y - offsetY, w, h);
+        Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
+        ctx.setColor(Color.BLUE);
+        ctx.fill(anchor);
     }
 }

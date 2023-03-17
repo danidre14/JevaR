@@ -5,28 +5,36 @@ import java.util.*;
 import java.util.List;
 
 public class JevaR implements Runnable {
-    private JevaScreen screen;
+    protected JevaScreen screen;
     private HashMap<String, JevaClip> jevaclipLibrary;
 
-    protected static HashMap<String, JevaClip> jevaclipHeirarchy;
+    protected HashMap<String, JevaClip> jevaclipHeirarchy;
 
-    protected static HashMap<String, JevaScript> jevascriptLibrary;
+    protected HashMap<String, JevaScript> jevascriptLibrary;
     private HashMap<String, JevaScript> jevascriptHeirarchy;
 
-    protected static HashMap<String, JevaGraphic> jevagraphicLibrary;
-    protected static HashMap<String, JevaSpriteSheet> jevaspritesheetLibrary;
-    protected static HashMap<String, JevaSound> jevasoundLibrary;
+    protected HashMap<String, JevaGraphic> jevagraphicLibrary;
+    protected HashMap<String, JevaSpriteSheet> jevaspritesheetLibrary;
+    protected HashMap<String, JevaSound> jevasoundLibrary;
 
     private Thread gameThread;
     private boolean isRunning;
 
+    private boolean isLoaded;
+    private JevaRScript initScript;
+
+    
+    public JevaVCam vcam;
+
+    public JevaMeta meta;
+
     private int fps;
 
-    public JevaR(int _width, int _height) {
-        this(_width, _height, 10);
+    public JevaR(int _width, int _height, JevaRScript onLoad) {
+        this(_width, _height, 60, onLoad);
     }
 
-    public JevaR(int _width, int _height, int fps) {
+    public JevaR(int _width, int _height, int fps, JevaRScript onLoad) {
         screen = new JevaScreen(_width, _height);
 
         jevaclipLibrary = new HashMap<>();
@@ -37,11 +45,16 @@ public class JevaR implements Runnable {
         jevaspritesheetLibrary = new HashMap<>();
         jevasoundLibrary = new HashMap<>();
 
+        meta = new JevaMeta(this);
+        vcam = new JevaVCam(this, "myVC", 0, 0, _width, _height);
+
         isRunning = false;
         this.fps = fps;
 
-        gameThread = new Thread(this);
-        gameThread.start();
+        initScript = onLoad;
+        isLoaded = false;
+
+        _startRuntime();
     }
 
     // creating library jobtives
@@ -63,13 +76,14 @@ public class JevaR implements Runnable {
             return;
 
         // add JevaSpriteSheet to game engine
-        JevaSpriteSheet spritesheet = new JevaSpriteSheet(_init);
+        JevaSpriteSheet spritesheet = new JevaSpriteSheet(this, _init);
         jevaspritesheetLibrary.put(_label, spritesheet);
     }
 
     public void createSound(String _label, String fileName) {
         createSound(_label, fileName, 1);
     }
+
     public void createSound(String _label, String fileName, int amount) {
         if (jevasoundLibrary.get(_label) != null)
             return;
@@ -104,7 +118,7 @@ public class JevaR implements Runnable {
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaPrefab(_label, _x, _y, _width, _height);
+        JevaClip jevaclip = new JevaPrefab(this, _label, _x, _y, _width, _height);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
@@ -119,7 +133,7 @@ public class JevaR implements Runnable {
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaPrefab(_label, _x, _y, _width, _height, script);
+        JevaClip jevaclip = new JevaPrefab(this, _label, _x, _y, _width, _height, script);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
@@ -130,7 +144,7 @@ public class JevaR implements Runnable {
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaPrefab(_label, _x, _y, _width, _height, onLoad);
+        JevaClip jevaclip = new JevaPrefab(this, _label, _x, _y, _width, _height, onLoad);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
@@ -141,13 +155,14 @@ public class JevaR implements Runnable {
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaText(_label, _text, _x, _y, _width, _height);
+        JevaClip jevaclip = new JevaText(this, _label, _text, _x, _y, _width, _height);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
     }
 
-    public void createText(String _label, String _text, double _x, double _y, double _width, double _height, String _scriptName) {
+    public void createText(String _label, String _text, double _x, double _y, double _width, double _height,
+            String _scriptName) {
         if (jevaclipLibrary.get(_label) != null)
             return;
 
@@ -156,18 +171,19 @@ public class JevaR implements Runnable {
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaText(_label, _text, _x, _y, _width, _height, script);
+        JevaClip jevaclip = new JevaText(this, _label, _text, _x, _y, _width, _height, script);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
     }
 
-    public void createText(String _label, String _text, double _x, double _y, double _width, double _height, JevaScript onLoad) {
+    public void createText(String _label, String _text, double _x, double _y, double _width, double _height,
+            JevaScript onLoad) {
         if (jevaclipLibrary.get(_label) != null)
             return;
 
         // initilize a JevaClip
-        JevaClip jevaclip = new JevaText(_label, _text, _x, _y, _width, _height, onLoad);
+        JevaClip jevaclip = new JevaText(this, _label, _text, _x, _y, _width, _height, onLoad);
 
         // add JevaClip to game engine
         jevaclipLibrary.put(_label, jevaclip);
@@ -235,7 +251,7 @@ public class JevaR implements Runnable {
         for (JevaScript _script : onLoads)
             _onLoads.add(_script);
 
-        JevaClip jevaclip = new JevaPrefab(_label, _x, _y, _width, _height, _onLoads);
+        JevaClip jevaclip = new JevaPrefab(this, _label, _x, _y, _width, _height, _onLoads);
 
         String id = JevaUtils.generateUUID();
 
@@ -246,7 +262,7 @@ public class JevaR implements Runnable {
 
         return jevaclip;
     }
-    
+
     public JevaClip attachText(String _label) {
         JevaClip oldJevaclip = jevaclipLibrary.get(_label);
         JevaText oldText = (JevaText) oldJevaclip;
@@ -295,7 +311,7 @@ public class JevaR implements Runnable {
         for (JevaScript _script : onLoads)
             _onLoads.add(_script);
 
-        JevaClip jevaclip = new JevaText(_label, _text, _x, _y, _width, _height, _onLoads);
+        JevaClip jevaclip = new JevaText(this, _label, _text, _x, _y, _width, _height, _onLoads);
 
         String id = JevaUtils.generateUUID();
 
@@ -321,6 +337,20 @@ public class JevaR implements Runnable {
         }
     }
 
+    private void loadEngine() {
+        if (isLoaded)
+            return;
+        initScript.call(this);
+        isLoaded = true;
+    }
+
+    private void _startRuntime() {
+        loadEngine();
+
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
+
     private void tickEngine() {
         // run all attached scripts
         jevascriptHeirarchy.forEach((key, script) -> {
@@ -332,6 +362,7 @@ public class JevaR implements Runnable {
         });
     }
 
+
     private void renderEngine() {
         // TODO find out how to clear screen
         // clear screen
@@ -340,9 +371,10 @@ public class JevaR implements Runnable {
         // get context
         Graphics2D ctx = screen.getContext();
 
-        jevaclipHeirarchy.forEach((key, jevaclip) -> {
-            jevaclip.render(ctx);
-        });
+        vcam.render(ctx);
+        // jevaclipHeirarchy.forEach((key, jevaclip) -> {
+        //     jevaclip.render(ctx);
+        // });
 
         screen.drawScreen();
         ctx.dispose();

@@ -8,6 +8,7 @@ import java.util.ArrayList;
  * the amount of time to display each frame.
  */
 public class JevaSpriteSheet {
+    private JevaR parent;
     private ArrayList<AnimFrame> frames; // collection of frames for animation
     private int currFrameIndex; // current frame being displayed
     private long animTime; // time that the animation has run for already
@@ -17,7 +18,8 @@ public class JevaSpriteSheet {
     /**
      * Creates a new, empty Animation.
      */
-    public JevaSpriteSheet(JevaScript _init) {
+    public JevaSpriteSheet(JevaR parent, JevaScript _init) {
+        this.parent = parent;
         frames = new ArrayList<AnimFrame>();
         totalDuration = 0;
         _init.call(this);
@@ -28,7 +30,7 @@ public class JevaSpriteSheet {
      * duration (time to display the image).
      */
     public synchronized void addFrame(String _label, long duration) {
-        JevaGraphic graphic = JevaR.jevagraphicLibrary.get(_label);
+        JevaGraphic graphic = parent.jevagraphicLibrary.get(_label);
 
         if (graphic == null)
             return;

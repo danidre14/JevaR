@@ -7,28 +7,38 @@ import java.awt.image.BufferedImage;
 
 public class JevaClip {
     private String _label;
+    protected JevaR parent;
+
     public double _x, _y, _width, _height;
+    protected double _anchorX, _anchorY;
+    public double _scaleX, _scaleY;
 
     private boolean isLoaded;
 
     protected ArrayList<JevaScript> _onLoadScripts;
     protected ArrayList<JevaScript> _scriptsList;
 
-    protected JevaClip(String _label, double _x, double _y, double _width, double _height) {
-        this(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height) {
+        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaClip(String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
-        this(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height,
+            JevaScript onLoad) {
+        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaClip(String _label, double _x, double _y, double _width, double _height,
+    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
+        this.parent = parent;
         this._label = _label;
         this._x = _x;
         this._y = _y;
         this._width = _width;
         this._height = _height;
+        this._anchorX = 0.5;
+        this._anchorY = 1;
+        this._scaleX = 1;
+        this._scaleY = 1;
 
         _onLoadScripts = onLoads;
         isLoaded = false;
@@ -48,7 +58,7 @@ public class JevaClip {
     // adding jobtives
 
     public void addJevascript(String _label) {
-        JevaScript script = JevaR.jevascriptLibrary.get(_label);
+        JevaScript script = parent.jevascriptLibrary.get(_label);
 
         if (script == null)
             return;
@@ -70,8 +80,10 @@ public class JevaClip {
     protected void render(Graphics2D ctx) {
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
-        int _width = JevaUtils.roundInt(this._width);
-        int _height = JevaUtils.roundInt(this._height);
+        int _width = JevaUtils.roundInt(this._width * this._scaleX);
+        int _height = JevaUtils.roundInt(this._height * this._scaleY);
+        int offsetX = JevaUtils.roundInt(this._anchorX * _width);
+        int offsetY = JevaUtils.roundInt(this._anchorY * _height);
         int w = Math.max(Math.abs(_width), 1);
         int h = Math.max(Math.abs(_height), 1);
         int x = _width >= 0 ? _x : _x - w;
@@ -104,12 +116,20 @@ public class JevaClip {
         pCtx.fill(rec1);
         pCtx.fill(rec2);
 
-        ctx.drawImage(painting, x, y, null);
+        ctx.drawImage(painting, x - offsetX, y - offsetY, null);
         pCtx.dispose();
     }
 
     private Rectangle2D.Double getBoundingRectangle() {
-        return new Rectangle2D.Double(_x, _y, _width, _height);
+        double _width = this._width * this._scaleX;
+        double _height = this._height * this._scaleY;
+        double offsetX = this._anchorX * _width;
+        double offsetY = this._anchorY * _height;
+        double w = Math.max(Math.abs(_width), 1);
+        double h = Math.max(Math.abs(_height), 1);
+        double x = _width >= 0 ? _x : _x - w;
+        double y = _height >= 0 ? _y : _y - h;
+        return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
     public boolean hitTest(JevaClip other) {
@@ -132,7 +152,7 @@ public class JevaClip {
 
     public boolean hitTest(String _label) {
         Rectangle2D.Double thisRect = getBoundingRectangle();
-        for (JevaClip jevaclip : JevaR.jevaclipHeirarchy.values()) {
+        for (JevaClip jevaclip : parent.jevaclipHeirarchy.values()) {
             if (jevaclip._label.equals(_label) && jevaclip != this) {
                 Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                 if (thisRect.intersects(otherClipsRect)) {
@@ -141,5 +161,21 @@ public class JevaClip {
             }
         }
         return false;
+    }
+
+    public double getAnchorX() {
+        return _anchorX;
+    }
+
+    public void setAnchorX(double value) {
+        _anchorX = Math.min(1, Math.max(0, value));
+    }
+
+    public double getAnchorY() {
+        return _anchorY;
+    }
+
+    public void setAnchorY(double value) {
+        _anchorY = Math.min(1, Math.max(0, value));
     }
 }
