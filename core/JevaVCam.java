@@ -179,15 +179,23 @@ public class JevaVCam {
     }
 
     private Rectangle2D.Double getBoundingRectangle() {
-        return new Rectangle2D.Double(_pX, _pY, _pWidth, _pHeight);
+        double _width = this._pWidth * this._pScaleX;
+        double _height = this._pHeight * this._pScaleY;
+        double offsetX = this._pAnchorX * _width;
+        double offsetY = this._pAnchorY * _height;
+        double w = Math.max(Math.abs(_width), 1);
+        double h = Math.max(Math.abs(_height), 1);
+        double x = _width >= 0 ? _pX : _pX - w;
+        double y = _height >= 0 ? _pY : _pY - h;
+        return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
-    // public boolean hitTest(JevaClip other) {
-    // Rectangle2D.Double thisRect = getBoundingRectangle();
-    // Rectangle2D.Double otherRect = other.getBoundingRectangle();
+    public boolean hitTest(JevaClip other) {
+    Rectangle2D.Double thisRect = getBoundingRectangle();
+    Rectangle2D.Double otherRect = other.getBoundingRectangle();
 
-    // return thisRect.intersects(otherRect);
-    // }
+    return thisRect.intersects(otherRect);
+    }
 
     public boolean hitTest(Rectangle2D.Double targetRect) {
         Rectangle2D.Double thisRect = getBoundingRectangle();

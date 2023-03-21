@@ -120,7 +120,7 @@ public class JevaClip {
         pCtx.dispose();
     }
 
-    private Rectangle2D.Double getBoundingRectangle() {
+    protected Rectangle2D.Double getBoundingRectangle() {
         double _width = this._width * this._scaleX;
         double _height = this._height * this._scaleY;
         double offsetX = this._anchorX * _width;
