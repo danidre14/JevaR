@@ -8,7 +8,7 @@ import java.util.ArrayList;
  * the amount of time to display each frame.
  */
 public class JevaSpriteSheet {
-    private JevaR parent;
+    private JevaR core;
     private ArrayList<AnimFrame> frames; // collection of frames for animation
     private int currFrameIndex; // current frame being displayed
     private long animTime; // time that the animation has run for already
@@ -18,8 +18,8 @@ public class JevaSpriteSheet {
     /**
      * Creates a new, empty Animation.
      */
-    public JevaSpriteSheet(JevaR parent, JevaScript _init) {
-        this.parent = parent;
+    protected JevaSpriteSheet(JevaR core, JevaScript _init) {
+        this.core = core;
         frames = new ArrayList<AnimFrame>();
         totalDuration = 0;
         _init.call(this);
@@ -29,8 +29,8 @@ public class JevaSpriteSheet {
      * Adds an image to the animation with the specified
      * duration (time to display the image).
      */
-    public synchronized void addFrame(String _label, long duration) {
-        JevaGraphic graphic = parent.jevagraphicLibrary.get(_label);
+    protected synchronized void addFrame(String _label, long duration) {
+        JevaGraphic graphic = core.jevagraphicLibrary.get(_label);
 
         if (graphic == null)
             return;
@@ -44,7 +44,7 @@ public class JevaSpriteSheet {
     /**
      * Starts this animation over from the beginning.
      */
-    public synchronized void reset() {
+    protected synchronized void reset() {
         animTime = 0; // reset time animation has run for to zero
         currFrameIndex = 0; // reset current frame to first frame
         startTime = System.currentTimeMillis(); // reset start time to current time
@@ -54,7 +54,7 @@ public class JevaSpriteSheet {
      * Updates this animation's current image (frame), if
      * neccesary.
      */
-    public synchronized void tick() {
+    protected synchronized void tick() {
         long currTime = System.currentTimeMillis(); // find the current time
         long elapsedTime = currTime - startTime; // find how much time has elapsed since last update
         startTime = currTime; // set start time to current time
@@ -77,7 +77,7 @@ public class JevaSpriteSheet {
      * Gets this Animation's current image. Returns null if this
      * animation has no images.
      */
-    public synchronized Image getSource() {
+    protected synchronized Image getSource() {
         if (frames.size() == 0) {
             return null;
         } else {
@@ -85,11 +85,11 @@ public class JevaSpriteSheet {
         }
     }
 
-    public int getNumFrames() { // find out how many frames in animation
+    protected int getNumFrames() { // find out how many frames in animation
         return frames.size();
     }
 
-    private AnimFrame getFrame(int i) { // returns ith frame in the collection
+    protected AnimFrame getFrame(int i) { // returns ith frame in the collection
         return frames.get(i);
     }
 
@@ -98,7 +98,7 @@ public class JevaSpriteSheet {
         Image image;
         long endTime;
 
-        public AnimFrame(Image image, long endTime) {
+        private AnimFrame(Image image, long endTime) {
             this.image = image;
             this.endTime = endTime;
         }

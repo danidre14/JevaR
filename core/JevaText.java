@@ -12,18 +12,18 @@ public class JevaText extends JevaClip {
     public int _fontSize;
     public String _fontFamily;
 
-    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height) {
-        this(parent, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaText(JevaR core, String _label, String _text, double _x, double _y, double _width, double _height) {
+        this(core, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height,
+    protected JevaText(JevaR core, String _label, String _text, double _x, double _y, double _width, double _height,
             JevaScript onLoad) {
-        this(parent, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+        this(core, _label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaText(JevaR parent, String _label, String _text, double _x, double _y, double _width, double _height,
+    protected JevaText(JevaR core, String _label, String _text, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
-        super(parent, _label, _x, _y, _width, _height, onLoads);
+        super(core, _label, _x, _y, _width, _height, onLoads);
 
         this._text = _text;
         this._fontColor = Color.WHITE;
@@ -101,7 +101,8 @@ public class JevaText extends JevaClip {
         pCtx.setColor(_fontColor);
         // pCtx.setFont(new Font(pCtx.getFont().getFontName(), Font.PLAIN, _height));
         pCtx.setFont(new Font(_fontFamily, Font.PLAIN, (int) Math.max(8, _fontSize)));
-        pCtx.drawString(_text, px, py + _fontSize);
+        for (String line : _text.split("\n"))
+            pCtx.drawString(line, px, py += _fontSize);
 
         ctx.drawImage(painting, x - offsetX, y - offsetY, null);
         pCtx.dispose();
@@ -110,6 +111,7 @@ public class JevaText extends JevaClip {
         ctx.setColor(Color.BLUE);
         ctx.fill(anchor);
         ctx.setColor(Color.ORANGE);
-        ctx.drawRect(_x - JevaUtils.roundInt(this._anchorX * this._width), _y - JevaUtils.roundInt(this._anchorY * this._height), (int)this._width, (int) this._height);
+        ctx.drawRect(_x - JevaUtils.roundInt(this._anchorX * this._width),
+                _y - JevaUtils.roundInt(this._anchorY * this._height), (int) this._width, (int) this._height);
     }
 }

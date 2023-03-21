@@ -24,8 +24,9 @@ public class JevaR implements Runnable {
     private JevaRScript initScript;
 
     
+    public JevaMouse mouse;
+    public JevaKey key;
     public JevaVCam vcam;
-
     public JevaMeta meta;
 
     private int fps;
@@ -35,7 +36,7 @@ public class JevaR implements Runnable {
     }
 
     public JevaR(int _width, int _height, int fps, JevaRScript onLoad) {
-        screen = new JevaScreen(_width, _height);
+        screen = new JevaScreen(this, _width, _height);
 
         jevaclipLibrary = new HashMap<>();
         jevaclipHeirarchy = new HashMap<>();
@@ -45,6 +46,8 @@ public class JevaR implements Runnable {
         jevaspritesheetLibrary = new HashMap<>();
         jevasoundLibrary = new HashMap<>();
 
+        mouse = new JevaMouse(this);
+        key = new JevaKey(this);
         meta = new JevaMeta(this);
         vcam = new JevaVCam(this, "myVC", 0, 0, _width, _height);
 
@@ -328,8 +331,8 @@ public class JevaR implements Runnable {
             isRunning = true;
             while (isRunning) {
                 tickEngine();
-                JevaKey.clearKeyStates(false);
-                JevaMouse.clearMouseStates(false);
+                key.clearKeyStates(false);
+                mouse.clearMouseStates(false);
                 renderEngine();
                 Thread.sleep(1000 / fps);
             }

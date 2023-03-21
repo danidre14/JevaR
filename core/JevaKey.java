@@ -4,6 +4,8 @@ import java.util.*;
 import java.awt.event.*;
 
 public class JevaKey {
+    private JevaR core;
+
     public static int ALT = KeyEvent.VK_ALT;
     public static int BACKSPACE = KeyEvent.VK_BACK_SPACE;
     public static int CAPSLOCK = KeyEvent.VK_CAPS_LOCK;
@@ -35,7 +37,6 @@ public class JevaKey {
     public static int EIGHT = KeyEvent.VK_8;
     public static int NINE = KeyEvent.VK_9;
     
-
     public static int A = KeyEvent.VK_A;
     public static int B = KeyEvent.VK_B;
     public static int C = KeyEvent.VK_C;
@@ -63,64 +64,65 @@ public class JevaKey {
     public static int Y = KeyEvent.VK_Y;
     public static int Z = KeyEvent.VK_Z;
 
-    public enum _keyStates {
+    protected static enum _keyStates {
         nil,
         down,
         up,
         expired
     }
 
-    public static HashMap<String, _keyStates> _keysList;
-    public static HashMap<String, _keyStates> _keysPressed;
-    public static HashMap<String, _keyStates> _keysReleased;
-    static {
+    protected HashMap<String, _keyStates> _keysList;
+    protected HashMap<String, _keyStates> _keysPressed;
+    protected HashMap<String, _keyStates> _keysReleased;
+    protected JevaKey(JevaR core) {
+        this.core = core;
         _keysList = new HashMap<>();
         _keysPressed = new HashMap<>();
         _keysReleased = new HashMap<>();
     }
 
-    public static boolean isDown(int keyCode) {
+    public boolean isDown(int keyCode) {
         boolean keyDown = _keysList.get("code_" + keyCode) == _keyStates.down;
 
         return keyDown;
     }
 
-    public static boolean isDown(String keyName) {
+    public boolean isDown(String keyName) {
         keyName = keyName.toLowerCase();
         boolean keyDown = _keysList.get("name_" + keyName) == _keyStates.down;
 
         return keyDown;
     }
 
-    public static boolean isUp(int keyCode) {
+    public boolean isUp(int keyCode) {
         return !isDown(keyCode);
     }
 
-    public static boolean isUp(String keyName) {
+    public boolean isUp(String keyName) {
         keyName = keyName.toLowerCase();
         return !isDown(keyName);
     }
 
-    public static boolean isPressed(int keyCode) {
+    public boolean isPressed(int keyCode) {
         boolean keyPressed = _keysPressed.get("code_" + keyCode) == _keyStates.down;
 
         return keyPressed;
     }
 
-    public static boolean isPressed(String keyName) {
+    public boolean isPressed(String keyName) {
         keyName = keyName.toLowerCase();
         boolean keyPressed = _keysPressed.get("name_" + keyName) == _keyStates.down;
 
         return keyPressed;
     }
 
-    public static boolean isReleased(int keyCode) {
+    public boolean isReleased(int keyCode) {
         boolean keyReleased = _keysReleased.get("code_" + keyCode) == _keyStates.down;
 
         return keyReleased;
     }
 
-    public static boolean isReleased(String keyName) {
+    public boolean isReleased(String keyName) {
         keyName = keyName.toLowerCase();
         boolean keyReleased = _keysReleased.get("name_" + keyName) == _keyStates.down;
 
@@ -128,7 +130,7 @@ public class JevaKey {
     }
 
 
-    public static void clearKeyStates(boolean absolute) {
+    protected void clearKeyStates(boolean absolute) {
         _keysPressed.forEach((_keyCode, _keyState) -> {
             if (_keyState == _keyStates.down)
                 _keysPressed.put(_keyCode, _keyStates.up);
@@ -142,7 +144,7 @@ public class JevaKey {
             });
     }
 
-    public static void expireKeyPressedStates() {
+    protected void expireKeyPressedStates() {
         _keysPressed.forEach((_keyCode, _keyState) -> {
             _keysPressed.put(_keyCode, _keyStates.expired);
         });

@@ -7,7 +7,7 @@ import java.io.*;
 public class JevaSound {
     private MultiClip source;
 
-    public JevaSound(String fileName, int amount) {
+    protected JevaSound(String fileName, int amount) {
         String path = "sounds/";
         source = new MultiClip(path.concat(fileName), amount);
     }
@@ -60,7 +60,7 @@ public class JevaSound {
         private int maxClips;
         private int clipNum;
 
-        public MultiClip(String fileName, int amount) {
+        private MultiClip(String fileName, int amount) {
             clipBag = new Clip[amount];
             clipFramePos = new int[amount];
             clipWasPlaying = new boolean[amount];
@@ -77,7 +77,7 @@ public class JevaSound {
             clipNum = 0;
         }
 
-        public void playClip(boolean looping) {
+        private void playClip(boolean looping) {
             Clip clip = clipBag[clipNum];
             clipNum = (clipNum + 1) % maxClips;
 
@@ -90,14 +90,14 @@ public class JevaSound {
             clipLooping[clipNum] = looping;
         }
 
-        public void pauseClip() {
+        private void pauseClip() {
             for (int i = 0; i < maxClips; i++) {
                 clipFramePos[i] = clipBag[i].getFramePosition();
                 clipBag[i].stop();
             }
         }
 
-        public void resumeClip() {
+        private void resumeClip() {
             if (maxClips == 1) {
                 playClip(false);
             } else
@@ -112,7 +112,7 @@ public class JevaSound {
                 }
         }
 
-        public void stopClip() {
+        private void stopClip() {
             for (int i = 0; i < maxClips; i++) {
                 clipBag[i].stop();
                 clipWasPlaying[i] = false;

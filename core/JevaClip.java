@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 
 public class JevaClip {
     private String _label;
-    protected JevaR parent;
+    protected JevaR core;
 
     public double _x, _y, _width, _height;
     protected double _anchorX, _anchorY;
@@ -18,18 +18,18 @@ public class JevaClip {
     protected ArrayList<JevaScript> _onLoadScripts;
     protected ArrayList<JevaScript> _scriptsList;
 
-    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height) {
-        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaClip(JevaR core, String _label, double _x, double _y, double _width, double _height) {
+        this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height,
+    protected JevaClip(JevaR core, String _label, double _x, double _y, double _width, double _height,
             JevaScript onLoad) {
-        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+        this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaClip(JevaR parent, String _label, double _x, double _y, double _width, double _height,
+    protected JevaClip(JevaR core, String _label, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
-        this.parent = parent;
+        this.core = core;
         this._label = _label;
         this._x = _x;
         this._y = _y;
@@ -58,7 +58,7 @@ public class JevaClip {
     // adding jobtives
 
     public void addJevascript(String _label) {
-        JevaScript script = parent.jevascriptLibrary.get(_label);
+        JevaScript script = core.jevascriptLibrary.get(_label);
 
         if (script == null)
             return;
@@ -152,7 +152,7 @@ public class JevaClip {
 
     public boolean hitTest(String _label) {
         Rectangle2D.Double thisRect = getBoundingRectangle();
-        for (JevaClip jevaclip : parent.jevaclipHeirarchy.values()) {
+        for (JevaClip jevaclip : core.jevaclipHeirarchy.values()) {
             if (jevaclip._label.equals(_label) && jevaclip != this) {
                 Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                 if (thisRect.intersects(otherClipsRect)) {

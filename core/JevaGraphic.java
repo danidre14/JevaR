@@ -14,7 +14,7 @@ import java.awt.Image;
 
 public class JevaGraphic {
     private Image source;
-	public JevaGraphic(String fileName) {
+	protected JevaGraphic(String fileName) {
         String path = "images/";
         source = loadImage(path.concat(fileName));
 	}

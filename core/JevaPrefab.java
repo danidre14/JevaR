@@ -14,17 +14,17 @@ public class JevaPrefab extends JevaClip {
     private appearances appearanceType;
     private Object appearanceSource;
 
-    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height) {
-        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    protected JevaPrefab(JevaR core, String _label, double _x, double _y, double _width, double _height) {
+        this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
-        this(parent, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
+    protected JevaPrefab(JevaR core, String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
+        this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
-    protected JevaPrefab(JevaR parent, String _label, double _x, double _y, double _width, double _height,
+    protected JevaPrefab(JevaR core, String _label, double _x, double _y, double _width, double _height,
             ArrayList<JevaScript> onLoads) {
-        super(parent, _label, _x, _y, _width, _height, onLoads);
+        super(core, _label, _x, _y, _width, _height, onLoads);
 
         appearanceName = "default";
         appearanceType = appearances.painting;
@@ -35,7 +35,7 @@ public class JevaPrefab extends JevaClip {
     public void useGraphic(String _label) {
         if (appearanceName.equals(_label) && appearanceType == appearances.graphic)
             return;
-        JevaGraphic graphic = parent.jevagraphicLibrary.get(_label);
+        JevaGraphic graphic = core.jevagraphicLibrary.get(_label);
 
         if (graphic == null)
             return;
@@ -50,7 +50,7 @@ public class JevaPrefab extends JevaClip {
     public void useSpriteSheet(String _label) {
         if (appearanceName.equals(_label) && appearanceType == appearances.spritesheet)
             return;
-        JevaSpriteSheet source = parent.jevaspritesheetLibrary.get(_label);
+        JevaSpriteSheet source = core.jevaspritesheetLibrary.get(_label);
 
         if (source == null)
             return;
