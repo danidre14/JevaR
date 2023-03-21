@@ -1,6 +1,5 @@
 package core;
 
-import java.util.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
@@ -55,66 +54,35 @@ public class JevaVCam {
     protected void tick() {
     }
 
-    protected void render(Graphics2D ctx) {
+    private Graphics2D getClearViewport() {
         Graphics2D vcamCtx = vcamCanvas.createGraphics();
         // clear screen
         vcamCtx.setColor(core.screen.backgroundColor);
         vcamCtx.fillRect(0, 0, defaultStageWidth, defaultStageHeight);
 
-        // double pScaleX = defaultStageWidth / this._pWidth / this._pScaleX;
-        // double pScaleY = defaultStageHeight / this._pHeight / this._pScaleY;
-        // double pOffsetX = this._pAnchorX * this._pWidth;// * pScaleX;
-        // // System.out.println("pScaleX= "+ pScaleX);
-        // double pOffsetY = this._pAnchorY * this._pHeight;// * pScaleY;
+        return vcamCtx;
+    }
 
-        // {
-        // double anchorX = (defaultStageWidth) * (_pAnchorX / 1.0);
-        // double anchorY = (defaultStageHeight) * (_pAnchorY / 1.0);
-        // vcamCtx.translate(anchorX, anchorY);
+    private void setProjector(Graphics2D vcamCtx) {
 
-        // double width = defaultStageWidth / _pWidth;
-        // double height = defaultStageHeight / _pHeight;
-        // vcamCtx.scale(width, height);
+        double projectorScaleW = defaultStageWidth / _pWidth;
+        double projectorScaleH = defaultStageHeight / _pHeight;
+        double projectorOffsetX = (defaultStageWidth) * (_pAnchorX / 1.0);
+        double projectorOffsetY = (defaultStageHeight) * (_pAnchorY / 1.0);
+        double projectorScaleX = 1 / _pScaleX;
+        double projectorScaleY = 1 / _pScaleY;
 
-        // double xScale = 1.0 / _pScaleX;
-        // double yScale = 1.0 / _pScaleY;
-        // vcamCtx.scale(xScale, yScale);
+        projectMatrix(vcamCtx,
+                projectorOffsetX,
+                projectorOffsetY,
+                projectorScaleX * projectorScaleW,
+                projectorScaleY * projectorScaleH,
+                0,
+                _pX,
+                _pY);
+    }
 
-        // // double rotation = numberUtils.degreesToRadians(_rotation);
-        // // vcamCtx.rotate(-rotation);
-
-        // double x = _pX;
-        // double y = _pY;
-        // vcamCtx.translate(-x, -y);
-        // }
-
-        {
-            double projectorScaleW = defaultStageWidth / _pWidth;
-            double projectorScaleH = defaultStageHeight / _pHeight;
-            double projectorOffsetX = (defaultStageWidth) * (_pAnchorX / 1.0);
-            double projectorOffsetY = (defaultStageHeight) * (_pAnchorY / 1.0);
-            double projectorScaleX = 1 / _pScaleX;
-            double projectorScaleY = 1 / _pScaleY;
-
-            projectMatrix(vcamCtx,
-                    projectorOffsetX,
-                    projectorOffsetY,
-                    projectorScaleX * projectorScaleW,
-                    projectorScaleY * projectorScaleH,
-                    0,
-                    _pX,
-                    _pY);
-        }
-
-        // AffineTransform projector = new AffineTransform();
-        // projector.translate(-_pX + pOffsetX, -_pY + pOffsetY);
-        // projector.scale(pScaleX, pScaleY);
-        // vcamCtx.transform(projector);
-
-        core.jevaclipHeirarchy.forEach((key, jevaclip) -> {
-            jevaclip.render(vcamCtx);
-        });
-
+    private void displayViewport(Graphics2D ctx) {
         int _vX = JevaUtils.roundInt(this._vX);
         int _vY = JevaUtils.roundInt(this._vY);
         int _vWidth = JevaUtils.roundInt(this._vWidth * this._vScaleX);
@@ -123,6 +91,20 @@ public class JevaVCam {
         int vOffsetY = JevaUtils.roundInt(this._vAnchorY * _vHeight);
 
         ctx.drawImage(vcamCanvas, _vX - vOffsetX, _vY - vOffsetY, _vWidth, _vHeight, null);
+    }
+
+    protected void render(Graphics2D ctx) {
+        Graphics2D vcamCtx = getClearViewport();
+
+        setProjector(vcamCtx);
+
+        core.jevaclipHeirarchy.forEach((key, jevaclip) -> {
+            if(hitTest(jevaclip)) {
+                jevaclip.render(vcamCtx);
+            }
+        });
+
+        displayViewport(ctx);
 
         vcamCtx.dispose();
     }
@@ -140,9 +122,6 @@ public class JevaVCam {
         // projector.transform
         projector.setTransform(arr3[0], arr3[1], arr3[2], arr3[3], arr3[4], arr3[5]);
         ctx.transform(projector);
-        // projector.transform(yAy * scaleX, -yAx * scaleX, yAx * scaleY, yAy * scaleY,
-        // oX, oY); // 1-4
-        // ctx.transform(1, 0, 0, 1, -x, -y); // 5
     }
 
     private double[] composeTransform(double[] arr1, double[] arr2) {
@@ -175,7 +154,6 @@ public class JevaVCam {
         arr3[4] = e3;
         arr3[5] = f3;
         return arr3;
-        // return {a3, b3, c3, d3, e3, f3};
     }
 
     private Rectangle2D.Double getBoundingRectangle() {
@@ -190,36 +168,23 @@ public class JevaVCam {
         return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
-    public boolean hitTest(JevaClip other) {
-    Rectangle2D.Double thisRect = getBoundingRectangle();
-    Rectangle2D.Double otherRect = other.getBoundingRectangle();
+    protected boolean hitTest(JevaClip other) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+        Rectangle2D.Double otherRect = other.getBoundingRectangle();
 
-    return thisRect.intersects(otherRect);
+        return thisRect.intersects(otherRect);
     }
 
-    public boolean hitTest(Rectangle2D.Double targetRect) {
+    protected boolean hitTest(Rectangle2D.Double targetRect) {
         Rectangle2D.Double thisRect = getBoundingRectangle();
 
         return thisRect.intersects(targetRect);
     }
 
-    public boolean hitTest(int x, int y) {
+    protected boolean hitTest(int x, int y) {
         Rectangle2D.Double thisRect = getBoundingRectangle();
         return thisRect.contains(x, y);
     }
-
-    // public boolean hitTest(String _label) {
-    // Rectangle2D.Double thisRect = getBoundingRectangle();
-    // for (JevaClip jevaclip : core.jevaclipHeirarchy.values()) {
-    // if (jevaclip._label.equals(_label) && jevaclip != this) {
-    // Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
-    // if (thisRect.intersects(otherClipsRect)) {
-    // return true;
-    // }
-    // }
-    // }
-    // return false;
-    // }
 
     public double getPAnchorX() {
         return _pAnchorX;

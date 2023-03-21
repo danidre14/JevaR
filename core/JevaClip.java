@@ -12,6 +12,7 @@ public class JevaClip {
     public double _x, _y, _width, _height;
     protected double _anchorX, _anchorY;
     public double _scaleX, _scaleY;
+    public String _instanceName;
 
     private boolean isLoaded;
 
@@ -39,6 +40,7 @@ public class JevaClip {
         this._anchorY = 1;
         this._scaleX = 1;
         this._scaleY = 1;
+        this._instanceName = null;
 
         _onLoadScripts = onLoads;
         isLoaded = false;
