@@ -18,7 +18,8 @@ public class JevaPrefab extends JevaClip {
         this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    protected JevaPrefab(JevaR core, String _label, double _x, double _y, double _width, double _height, JevaScript onLoad) {
+    protected JevaPrefab(JevaR core, String _label, double _x, double _y, double _width, double _height,
+            JevaScript onLoad) {
         this(core, _label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
@@ -63,6 +64,8 @@ public class JevaPrefab extends JevaClip {
     }
 
     protected void tick() {
+        if (!isLoaded || shouldRemove())
+            return;
         // run all attached scripts
         for (JevaScript script : _scriptsList) {
             script.call(this);
@@ -74,6 +77,8 @@ public class JevaPrefab extends JevaClip {
     }
 
     protected void render(Graphics2D ctx) {
+        if (!isLoaded || shouldRemove())
+            return;
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
         int _width = JevaUtils.roundInt(this._width * this._scaleX);

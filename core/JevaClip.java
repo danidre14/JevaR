@@ -9,12 +9,16 @@ public class JevaClip {
     private String _label;
     protected JevaR core;
 
+    private boolean markedForDeletion;
+
+    protected boolean preserve;
+
     public double _x, _y, _width, _height;
     protected double _anchorX, _anchorY;
     public double _scaleX, _scaleY;
     public String _instanceName;
 
-    private boolean isLoaded;
+    protected boolean isLoaded;
 
     protected ArrayList<JevaScript> _onLoadScripts;
     protected ArrayList<JevaScript> _scriptsList;
@@ -44,6 +48,8 @@ public class JevaClip {
 
         _onLoadScripts = onLoads;
         isLoaded = false;
+        preserve = false;
+        markedForDeletion = false;
 
         _scriptsList = new ArrayList<>();
     }
@@ -55,6 +61,14 @@ public class JevaClip {
             script.call(this);
         }
         isLoaded = true;
+        markedForDeletion = false;
+    }
+
+    protected void unload() {
+        if (!isLoaded)
+            return;
+
+        isLoaded = false;
     }
 
     // adding jobtives
@@ -73,13 +87,17 @@ public class JevaClip {
     }
 
     protected void tick() {
-        // run all attached scripts
+        if (!isLoaded || shouldRemove())
+            return;
+        // run all added scripts
         for (JevaScript script : _scriptsList) {
             script.call(this);
         }
     }
 
     protected void render(Graphics2D ctx) {
+        if (!isLoaded || shouldRemove())
+            return;
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
         int _width = JevaUtils.roundInt(this._width * this._scaleX);
@@ -122,6 +140,14 @@ public class JevaClip {
         pCtx.dispose();
     }
 
+    public void remove() {
+        markedForDeletion = true;
+    }
+
+    protected boolean shouldRemove() {
+        return markedForDeletion;
+    }
+
     protected Rectangle2D.Double getBoundingRectangle() {
         double _width = this._width * this._scaleX;
         double _height = this._height * this._scaleY;
@@ -135,6 +161,8 @@ public class JevaClip {
     }
 
     public boolean hitTest(JevaClip other) {
+        if (shouldRemove() || other.shouldRemove())
+            return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         Rectangle2D.Double otherRect = other.getBoundingRectangle();
 
@@ -142,20 +170,35 @@ public class JevaClip {
     }
 
     public boolean hitTest(Rectangle2D.Double targetRect) {
+        if (shouldRemove())
+            return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
 
         return thisRect.intersects(targetRect);
     }
 
     public boolean hitTest(int x, int y) {
+        if (shouldRemove())
+            return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         return thisRect.contains(x, y);
     }
 
     public boolean hitTest(String _label) {
+        if (shouldRemove())
+            return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
-        for (JevaClip jevaclip : core.jevaclipHeirarchy.values()) {
-            if (jevaclip._label.equals(_label) && jevaclip != this) {
+        for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
+            if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this && !jevaclip.shouldRemove()) {
+                Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
+                if (thisRect.intersects(otherClipsRect)) {
+                    return true;
+                }
+            }
+        }
+        if(core.getCurrentScene() != null) 
+        for (JevaClip jevaclip : core.getCurrentScene().jevaclipHierarchy.values()) {
+            if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this && !jevaclip.shouldRemove()) {
                 Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                 if (thisRect.intersects(otherClipsRect)) {
                     return true;

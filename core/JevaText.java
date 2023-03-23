@@ -59,6 +59,8 @@ public class JevaText extends JevaClip {
     // }
 
     protected void tick() {
+        if (!isLoaded || shouldRemove())
+            return;
         // run all attached scripts
         for (JevaScript script : _scriptsList) {
             script.call(this);
@@ -66,6 +68,8 @@ public class JevaText extends JevaClip {
     }
 
     protected void render(Graphics2D ctx) {
+        if (!isLoaded || shouldRemove())
+            return;
         int _x = JevaUtils.roundInt(this._x);
         int _y = JevaUtils.roundInt(this._y);
         int _width = JevaUtils.roundInt(this._width * this._scaleX);

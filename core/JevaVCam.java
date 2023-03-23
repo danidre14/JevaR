@@ -98,7 +98,7 @@ public class JevaVCam {
 
         setProjector(vcamCtx);
 
-        core.jevaclipHeirarchy.forEach((key, jevaclip) -> {
+        core.jevaclipHierarchy.forEach((key, jevaclip) -> {
             if(hitTest(jevaclip)) {
                 jevaclip.render(vcamCtx);
             }

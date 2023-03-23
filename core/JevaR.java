@@ -2,20 +2,19 @@ package core;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class JevaR implements Runnable {
     protected JevaScreen screen;
-    private HashMap<String, JevaClip> jevaclipLibrary;
-
-    protected HashMap<String, JevaClip> jevaclipHeirarchy;
-
+    protected HashMap<String, JevaClip> jevaclipLibrary;
     protected HashMap<String, JevaScript> jevascriptLibrary;
-    private HashMap<String, JevaScript> jevascriptHeirarchy;
-
     protected HashMap<String, JevaGraphic> jevagraphicLibrary;
     protected HashMap<String, JevaSpriteSheet> jevaspritesheetLibrary;
     protected HashMap<String, JevaSound> jevasoundLibrary;
+    protected HashMap<String, JevaScene> jevasceneLibrary;
+
+    protected HashMap<String, JevaClip> jevaclipHierarchy;
+    private String hierarchySceneName;
+    private HashMap<String, JevaScript> jevascriptHierarchy;
 
     private Thread gameThread;
     private boolean isRunning;
@@ -23,28 +22,32 @@ public class JevaR implements Runnable {
     private boolean isLoaded;
     private JevaRScript initScript;
 
-    
     public JevaMouse mouse;
     public JevaKey key;
     public JevaVCam vcam;
     public JevaMeta meta;
 
-    private int fps;
+    private int desiredFps;
+    private int currentFps;
+    private double deltaTime;
 
     public JevaR(int _width, int _height, JevaRScript onLoad) {
         this(_width, _height, 60, onLoad);
     }
 
-    public JevaR(int _width, int _height, int fps, JevaRScript onLoad) {
+    public JevaR(int _width, int _height, int desiredFps, JevaRScript onLoad) {
         screen = new JevaScreen(this, _width, _height);
 
         jevaclipLibrary = new HashMap<>();
-        jevaclipHeirarchy = new HashMap<>();
         jevascriptLibrary = new HashMap<>();
-        jevascriptHeirarchy = new HashMap<>();
         jevagraphicLibrary = new HashMap<>();
         jevaspritesheetLibrary = new HashMap<>();
         jevasoundLibrary = new HashMap<>();
+        jevasceneLibrary = new HashMap<>();
+
+        jevascriptHierarchy = new HashMap<>();
+        jevaclipHierarchy = new HashMap<>();
+        hierarchySceneName = null;
 
         mouse = new JevaMouse(this);
         key = new JevaKey(this);
@@ -52,10 +55,13 @@ public class JevaR implements Runnable {
         vcam = new JevaVCam(this, "myVC", 0, 0, _width, _height);
 
         isRunning = false;
-        this.fps = fps;
+        this.desiredFps = desiredFps;
+        this.currentFps = desiredFps;
 
         initScript = onLoad;
         isLoaded = false;
+
+        deltaTime = 0;
 
         _startRuntime();
     }
@@ -97,6 +103,16 @@ public class JevaR implements Runnable {
         // add JevaSound to game engine
         JevaSound sound = new JevaSound(fileName, amount);
         jevasoundLibrary.put(_label, sound);
+    }
+
+    public void createScene(String _label, JevaScript onLoad) {
+        if (jevasceneLibrary.get(_label) != null)
+            return;
+        // initialize a JevaScene
+        JevaScene jevascene = new JevaScene(this, _label, onLoad);
+
+        // add JevaScene to game engine
+        jevasceneLibrary.put(_label, jevascene);
     }
 
     public JevaSound getSound(String _label) {
@@ -205,7 +221,7 @@ public class JevaR implements Runnable {
     public void attachJevascript(JevaScript script) {
         String id = JevaUtils.generateUUID();
 
-        jevascriptHeirarchy.put(id, script);
+        jevascriptHierarchy.put(id, script);
     }
 
     public JevaClip attachPrefab(String _label) {
@@ -259,7 +275,7 @@ public class JevaR implements Runnable {
         String id = JevaUtils.generateUUID();
 
         // add JevaClip to screen's heirarchy
-        jevaclipHeirarchy.put(id, jevaclip);
+        jevaclipHierarchy.put(id, jevaclip);
 
         jevaclip.load();
 
@@ -319,25 +335,142 @@ public class JevaR implements Runnable {
         String id = JevaUtils.generateUUID();
 
         // add JevaClip to screen's heirarchy
-        jevaclipHeirarchy.put(id, jevaclip);
+        jevaclipHierarchy.put(id, jevaclip);
 
         jevaclip.load();
 
         return jevaclip;
     }
 
-    public void run() {
-        try {
-            isRunning = true;
-            while (isRunning) {
-                tickEngine();
-                key.clearKeyStates(false);
-                mouse.clearMouseStates(false);
-                renderEngine();
-                Thread.sleep(1000 / fps);
-            }
-        } catch (InterruptedException e) {
+    public void removePrefab(String _instanceName) {
+        JevaClip jevaClip = getJevaClip(_instanceName);
+
+        if (jevaClip != null && jevaClip instanceof JevaPrefab)
+            jevaClip.remove();
+    }
+
+    public void removeText(String _instanceName) {
+        JevaClip jevaClip = getJevaClip(_instanceName);
+
+        if (jevaClip != null && jevaClip instanceof JevaText)
+            jevaClip.remove();
+    }
+
+    public void removeClip(String _instanceName) {
+        JevaClip jevaClip = getJevaClip(_instanceName);
+
+        if (jevaClip != null)
+            jevaClip.remove();
+    }
+
+    public void useScene(String _label) {
+        if (!hasScene(_label))
+            return;
+
+        String currSceneName = getCurrentSceneName();
+
+        if (currSceneName == _label)
+            return;
+
+        if (currSceneName != null) {
+            getCurrentScene().unload();
         }
+
+        setCurrentSceneName(_label);
+
+        getCurrentScene().load();
+    }
+
+    public void resetScene() {
+        String currSceneName = getCurrentSceneName();
+
+        if (currSceneName == null)
+            return;
+
+        getCurrentScene().unload();
+
+        key.expireKeyPressedStates();
+        mouse.expireMousePressedStates();
+
+        getCurrentScene().load();
+    }
+
+    public int getFPS() {
+        return currentFps;
+    }
+
+    public double getDelta() {
+        return deltaTime / 1000000000.0;
+    }
+
+    private JevaClip getJevaClip(String name) {
+        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+            if (jevaclip._instanceName.equals(name) && !jevaclip.shouldRemove())
+                return jevaclip;
+        }
+
+        if (getCurrentScene() != null) {
+            JevaClip clip = getCurrentScene().getJevaClip(name);
+            if (clip != null)
+                return clip;
+        }
+        return null;
+    }
+
+    private String getCurrentSceneName() {
+        return hierarchySceneName;
+    }
+
+    private void setCurrentSceneName(String _label) {
+        hierarchySceneName = _label;
+    }
+
+    protected JevaScene getCurrentScene() {
+        if (hierarchySceneName == null)
+            return null;
+
+        return jevasceneLibrary.get(hierarchySceneName);
+    }
+
+    private boolean hasScene(String _label) {
+        return jevasceneLibrary.get(_label) != null;
+    }
+
+    public void run() {
+        isRunning = true;
+
+        double timePerFrame = 1000000000.0 / desiredFps;
+        long lastFrame = System.nanoTime();
+        long now = System.nanoTime();
+
+        int frames = 0;
+        long lastCheck = System.currentTimeMillis();
+
+        deltaTime = 0;
+
+        while (isRunning) {
+            now = System.nanoTime();
+            deltaTime = now - lastFrame;
+            if (deltaTime >= timePerFrame) {
+                lastFrame = now;
+                runEngine();
+                frames++;
+            }
+
+            if (System.currentTimeMillis() - lastCheck >= 1000) {
+                lastCheck = System.currentTimeMillis();
+                currentFps = frames;
+                frames = 0;
+            }
+        }
+    }
+
+    private void runEngine() {
+        tickEngine();
+        key.clearKeyStates(false);
+        mouse.clearMouseStates(false);
+        cleanUpEngine();
+        renderEngine();
     }
 
     private void loadEngine() {
@@ -356,31 +489,50 @@ public class JevaR implements Runnable {
 
     private void tickEngine() {
         // run all attached scripts
-        jevascriptHeirarchy.forEach((key, script) -> {
+        for (JevaScript script : jevascriptHierarchy.values()) {
             script.call(this);
-        });
-        // updating all entities
-        jevaclipHeirarchy.forEach((key, jevaclip) -> {
+        }
+
+        // updating all attached jevaclips
+        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
             jevaclip.tick();
-        });
+        }
+
+        // updating scene
+        if (getCurrentSceneName() != null)
+            getCurrentScene().tick();
     }
 
-
     private void renderEngine() {
-        // TODO find out how to clear screen
-        // clear screen
         screen.clearScreen();
 
         // get context
         Graphics2D ctx = screen.getContext();
 
-        vcam.render(ctx);
-        // jevaclipHeirarchy.forEach((key, jevaclip) -> {
-        //     jevaclip.render(ctx);
-        // });
+        // updating scene
+        if (getCurrentSceneName() != null)
+            getCurrentScene().render(ctx);
+
+        // vcam.render(ctx);
+        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+            jevaclip.render(ctx);
+        }
 
         screen.drawScreen();
         ctx.dispose();
+    }
+
+    private void cleanUpEngine() {
+        // clean up scenes
+        if (getCurrentScene() != null) {
+            getCurrentScene().cleanUp();
+        }
+
+        // delete all jevaclips markedForDeletion from hierarchy
+        jevaclipHierarchy.entrySet().removeIf(e -> {
+            JevaClip jevaclip = e.getValue();
+            return jevaclip.shouldRemove();
+        });
     }
 
 }
