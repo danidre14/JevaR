@@ -12,7 +12,8 @@ public class JevaScene {
     protected ArrayList<JevaScript> _onLoadScripts;
     protected ArrayList<JevaScript> _scriptsList;
 
-    protected HashMap<String, JevaClip> jevaclipHierarchy;
+    protected LinkedHashMap<String, JevaClip> sceneclipHierarchy;
+    private HashMap<String, JevaVCam> scenevcamHierarchy;
 
     protected JevaScene(JevaR core, String _label) {
         this(core, _label, new ArrayList<>(Arrays.asList()));
@@ -26,7 +27,8 @@ public class JevaScene {
         this.core = core;
         this._label = _label;
 
-        jevaclipHierarchy = new HashMap<>();
+        sceneclipHierarchy = new LinkedHashMap<>();
+        scenevcamHierarchy = new HashMap<>();
 
         _onLoadScripts = onLoads;
         isLoaded = false;
@@ -41,7 +43,7 @@ public class JevaScene {
             script.call(this);
         }
 
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+        for (JevaClip jevaclip : sceneclipHierarchy.values()) {
             jevaclip.load();
         }
         ;
@@ -53,7 +55,7 @@ public class JevaScene {
         if (!isLoaded)
             return;
 
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+        for (JevaClip jevaclip : sceneclipHierarchy.values()) {
             if (!jevaclip.preserve) {
                 jevaclip.unload();
                 // delete from heirarchy
@@ -61,7 +63,7 @@ public class JevaScene {
         }
 
         // delete all unpreserved jevaclips from hierarchy
-        jevaclipHierarchy.entrySet().removeIf(e -> {
+        sceneclipHierarchy.entrySet().removeIf(e -> {
             JevaClip jevaclip = e.getValue();
             return jevaclip.preserve == false;
         });
@@ -134,7 +136,7 @@ public class JevaScene {
         String id = JevaUtils.generateUUID();
 
         // add JevaClip to scene's heirarchy
-        jevaclipHierarchy.put(id, jevaclip);
+        sceneclipHierarchy.put(id, jevaclip);
 
         return jevaclip;
     }
@@ -192,13 +194,52 @@ public class JevaScene {
         String id = JevaUtils.generateUUID();
 
         // add JevaClip to scene's heirarchy
-        jevaclipHierarchy.put(id, jevaclip);
+        sceneclipHierarchy.put(id, jevaclip);
 
         return jevaclip;
     }
 
+    public JevaVCam addVCam(String _label) {
+        int defaultStageWidth = core.screen.getWidth();
+        int defaultStageHeight = core.screen.getHeight();
+        JevaVCam vcam = addVCam(_label, defaultStageWidth / 2, defaultStageHeight / 2, defaultStageWidth, defaultStageHeight);
+        vcam.setPAnchorX(0.5);
+        vcam.setPAnchorY(0.5);
+        vcam.setVAnchorX(0.5);
+        vcam.setVAnchorY(0.5);
+
+        return vcam;
+    }
+
+    public JevaVCam addVCam(String _label, double _pX, double _pY, double _pWidth, double _pHeight) {
+        return addVCam(_label, _pX, _pY, _pWidth, _pHeight, _pX, _pY, _pWidth, _pHeight);
+    }
+
+    public JevaVCam addVCam(String _label, double _pX, double _pY, double _pWidth, double _pHeight, double _vX,
+            double _vY, double _vWidth, double _vHeight) {
+        JevaVCam vcam = scenevcamHierarchy.get(_label);
+
+        if (vcam != null)
+            return vcam;
+
+        vcam = new JevaVCam(core, _label, _pX, _pY, _pWidth, _pHeight, _vX, _vY, _vWidth, _vHeight);
+
+        scenevcamHierarchy.put(_label, vcam);
+
+        return vcam;
+    }
+
+    public JevaVCam getVCam(String _label) {
+        return scenevcamHierarchy.get(_label);
+    }
+
+    protected void setVCamMouseCoords(int _x, int _y) {
+        for (JevaVCam vcam : scenevcamHierarchy.values())
+            vcam.setVCamMouseCoords(_x, _y);
+    }
+
     protected JevaClip getJevaClip(String name) {
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+        for (JevaClip jevaclip : sceneclipHierarchy.values()) {
             if (jevaclip._instanceName.equals(name) && !jevaclip.shouldRemove())
                 return jevaclip;
         }
@@ -214,16 +255,28 @@ public class JevaScene {
         }
 
         // updating all added jevaclips
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+        for (JevaClip jevaclip : sceneclipHierarchy.values()) {
             jevaclip.tick();
         }
     }
 
     protected void render(Graphics2D ctx) {
-        // TODO if vcams in scene, render those, else:
-        // rendering all added jevaclips
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
-            jevaclip.render(ctx);
+        if (scenevcamHierarchy.size() == 0) {
+            // rendering all added jevaclips
+            for (JevaClip jevaclip : sceneclipHierarchy.values()) {
+                jevaclip.render(ctx);
+            }
+            // rendering attached jevaclips
+            for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
+                if (core.screen.hitTest(jevaclip.getBoundingRectangle()))
+                    jevaclip.render(ctx);
+
+            }
+        } else {
+            for (JevaVCam vcam : scenevcamHierarchy.values()) {
+                if (core.screen.hitTest(vcam.getViewportBoundingRectangle()))
+                    vcam.render(ctx);
+            }
         }
     }
 
@@ -232,7 +285,7 @@ public class JevaScene {
             return;
 
         // delete all jevaclips markedForDeletion from hierarchy
-        jevaclipHierarchy.entrySet().removeIf(e -> {
+        sceneclipHierarchy.entrySet().removeIf(e -> {
             JevaClip jevaclip = e.getValue();
             return jevaclip.shouldRemove();
         });

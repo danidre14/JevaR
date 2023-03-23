@@ -111,11 +111,13 @@ public class JevaText extends JevaClip {
         ctx.drawImage(painting, x - offsetX, y - offsetY, null);
         pCtx.dispose();
 
-        Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
-        ctx.setColor(Color.BLUE);
-        ctx.fill(anchor);
-        ctx.setColor(Color.ORANGE);
-        ctx.drawRect(_x - JevaUtils.roundInt(this._anchorX * this._width),
-                _y - JevaUtils.roundInt(this._anchorY * this._height), (int) this._width, (int) this._height);
+        if (core.isDebugMode()) {
+            Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
+            ctx.setColor(Color.BLUE);
+            ctx.fill(anchor);
+            ctx.setColor(Color.ORANGE);
+            ctx.drawRect(_x - JevaUtils.roundInt(this._anchorX * this._width),
+                    _y - JevaUtils.roundInt(this._anchorY * this._height), (int) this._width, (int) this._height);
+        }
     }
 }

@@ -12,7 +12,7 @@ public class JevaR implements Runnable {
     protected HashMap<String, JevaSound> jevasoundLibrary;
     protected HashMap<String, JevaScene> jevasceneLibrary;
 
-    protected HashMap<String, JevaClip> jevaclipHierarchy;
+    protected LinkedHashMap<String, JevaClip> jevaclipHierarchy;
     private String hierarchySceneName;
     private HashMap<String, JevaScript> jevascriptHierarchy;
 
@@ -24,12 +24,13 @@ public class JevaR implements Runnable {
 
     public JevaMouse mouse;
     public JevaKey key;
-    public JevaVCam vcam;
     public JevaMeta meta;
 
     private int desiredFps;
     private int currentFps;
     private double deltaTime;
+
+    private boolean debugMode;
 
     public JevaR(int _width, int _height, JevaRScript onLoad) {
         this(_width, _height, 60, onLoad);
@@ -46,13 +47,12 @@ public class JevaR implements Runnable {
         jevasceneLibrary = new HashMap<>();
 
         jevascriptHierarchy = new HashMap<>();
-        jevaclipHierarchy = new HashMap<>();
+        jevaclipHierarchy = new LinkedHashMap<>();
         hierarchySceneName = null;
 
         mouse = new JevaMouse(this);
         key = new JevaKey(this);
         meta = new JevaMeta(this);
-        vcam = new JevaVCam(this, "myVC", 0, 0, _width, _height);
 
         isRunning = false;
         this.desiredFps = desiredFps;
@@ -63,10 +63,17 @@ public class JevaR implements Runnable {
 
         deltaTime = 0;
 
+        debugMode = false;
+
         _startRuntime();
     }
 
     // creating library jobtives
+
+    public void createGraphic(String _label) {
+        String fileName = _label.concat(".png");
+        createGraphic(_label, fileName);
+    }
 
     public void createGraphic(String _label, String fileName) {
         if (jevagraphicLibrary.get(_label) != null)
@@ -363,6 +370,17 @@ public class JevaR implements Runnable {
             jevaClip.remove();
     }
 
+    public JevaVCam getVCam(String _label) {
+        if (getCurrentSceneName() == null)
+            return null;
+        return getCurrentScene().getVCam(_label);
+    }
+
+    protected void setVCamMouseCoords(int _x, int _y) {
+        if (getCurrentSceneName() != null)
+            getCurrentScene().setVCamMouseCoords(_x, _y);
+    }
+
     public void useScene(String _label) {
         if (!hasScene(_label))
             return;
@@ -514,9 +532,9 @@ public class JevaR implements Runnable {
             getCurrentScene().render(ctx);
 
         // vcam.render(ctx);
-        for (JevaClip jevaclip : jevaclipHierarchy.values()) {
-            jevaclip.render(ctx);
-        }
+        // for (JevaClip jevaclip : jevaclipHierarchy.values()) {
+        // jevaclip.render(ctx);
+        // }
 
         screen.drawScreen();
         ctx.dispose();
@@ -533,6 +551,10 @@ public class JevaR implements Runnable {
             JevaClip jevaclip = e.getValue();
             return jevaclip.shouldRemove();
         });
+    }
+
+    protected boolean isDebugMode() {
+        return debugMode;
     }
 
 }

@@ -12,12 +12,17 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
     private JPanel gamePanel;
     private Container gameContainer;
 
+    protected int _width;
+    protected int _height;
+
     private BufferedImage offscreenCanvas;
 
     protected Color backgroundColor;
 
     protected JevaScreen(JevaR core, int _width, int _height) {
         this.core = core;
+        this._width = _width;
+        this._height = _height;
         setTitle("A JevaR Application");
         setSize(_width, _height + 10);
 
@@ -162,7 +167,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
 
         if (mouse._mouseList.get(mouseCode) == JevaMouse._mouseStates.nil
                 || mouse._mouseList.get(mouseCode) == null)
-                mouse._mouseList.put(mouseCode, JevaMouse._mouseStates.down);
+            mouse._mouseList.put(mouseCode, JevaMouse._mouseStates.down);
         if (mouse._mouseList.get(mouseName) == JevaMouse._mouseStates.nil
                 || mouse._mouseList.get(mouseName) == null)
             mouse._mouseList.put(mouseName, JevaMouse._mouseStates.down);
@@ -222,5 +227,11 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         int y = e.getY();
 
         mouse.setMouseCoords(x, y);
+    }
+
+    protected boolean hitTest(Rectangle2D.Double targetRect) {
+        Rectangle2D.Double thisRect = new Rectangle2D.Double(0, 0, getWidth(), getHeight());
+
+        return thisRect.intersects(targetRect);
     }
 }

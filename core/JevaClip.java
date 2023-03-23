@@ -11,7 +11,7 @@ public class JevaClip {
 
     private boolean markedForDeletion;
 
-    protected boolean preserve;
+    public boolean preserve;
 
     public double _x, _y, _width, _height;
     protected double _anchorX, _anchorY;
@@ -40,11 +40,11 @@ public class JevaClip {
         this._y = _y;
         this._width = _width;
         this._height = _height;
-        this._anchorX = 0.5;
-        this._anchorY = 1;
+        this._anchorX = 0;
+        this._anchorY = 0;
         this._scaleX = 1;
         this._scaleY = 1;
-        this._instanceName = null;
+        this._instanceName = "";
 
         _onLoadScripts = onLoads;
         isLoaded = false;
@@ -80,6 +80,20 @@ public class JevaClip {
             return;
 
         addJevascript(script);
+    }
+
+    public void centerAnchors() {
+        double xDiff = 0.5 - _anchorX;
+        double yDiff = 0.5 - _anchorY;
+
+        double xDiffOffset = (_width * _scaleX) * xDiff;
+        double yDiffOffset = (_height * _scaleY) * yDiff;
+
+        _x += xDiffOffset;
+        _y += yDiffOffset;
+
+        setAnchorX(0.5);
+        setAnchorY(0.5);
     }
 
     public void addJevascript(JevaScript script) {
@@ -189,22 +203,24 @@ public class JevaClip {
             return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
-            if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this && !jevaclip.shouldRemove()) {
+            if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this
+                    && !jevaclip.shouldRemove()) {
                 Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                 if (thisRect.intersects(otherClipsRect)) {
                     return true;
                 }
             }
         }
-        if(core.getCurrentScene() != null) 
-        for (JevaClip jevaclip : core.getCurrentScene().jevaclipHierarchy.values()) {
-            if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this && !jevaclip.shouldRemove()) {
-                Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
-                if (thisRect.intersects(otherClipsRect)) {
-                    return true;
+        if (core.getCurrentScene() != null)
+            for (JevaClip jevaclip : core.getCurrentScene().sceneclipHierarchy.values()) {
+                if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this
+                        && !jevaclip.shouldRemove()) {
+                    Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
+                    if (thisRect.intersects(otherClipsRect)) {
+                        return true;
+                    }
                 }
             }
-        }
         return false;
     }
 

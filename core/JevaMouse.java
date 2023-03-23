@@ -106,6 +106,6 @@ public class JevaMouse {
         _xmouse = _x;
         _ymouse = _y;
 
-        core.vcam.setVCamMouseCoords(_x, _y);
+        core.setVCamMouseCoords(_x, _y);
     }
 }

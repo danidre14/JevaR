@@ -127,10 +127,13 @@ public class JevaPrefab extends JevaClip {
             ctx.drawImage(painting, x - offsetX, y - offsetY, null);
             pCtx.dispose();
         }
-        ctx.setColor(Color.ORANGE);
-        ctx.drawRect(x - offsetX, y - offsetY, w, h);
-        Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
-        ctx.setColor(Color.BLUE);
-        ctx.fill(anchor);
+
+        if (core.isDebugMode()) {
+            ctx.setColor(Color.ORANGE);
+            ctx.drawRect(x - offsetX, y - offsetY, w, h);
+            Rectangle2D.Double anchor = new Rectangle2D.Double(_x - 5, _y - 5, 10, 10);
+            ctx.setColor(Color.BLUE);
+            ctx.fill(anchor);
+        }
     }
 }
