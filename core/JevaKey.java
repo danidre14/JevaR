@@ -25,7 +25,7 @@ public class JevaKey {
     public static int SPACE = KeyEvent.VK_SPACE;
     public static int TAB = KeyEvent.VK_TAB;
     public static int UP = KeyEvent.VK_UP;
-    
+
     public static int ZERO = KeyEvent.VK_0;
     public static int ONE = KeyEvent.VK_1;
     public static int TWO = KeyEvent.VK_2;
@@ -36,7 +36,7 @@ public class JevaKey {
     public static int SEVEN = KeyEvent.VK_7;
     public static int EIGHT = KeyEvent.VK_8;
     public static int NINE = KeyEvent.VK_9;
-    
+
     public static int A = KeyEvent.VK_A;
     public static int B = KeyEvent.VK_B;
     public static int C = KeyEvent.VK_C;
@@ -74,6 +74,7 @@ public class JevaKey {
     protected HashMap<String, _keyStates> _keysList;
     protected HashMap<String, _keyStates> _keysPressed;
     protected HashMap<String, _keyStates> _keysReleased;
+
     protected JevaKey(JevaR core) {
         this.core = core;
         _keysList = new HashMap<>();
@@ -129,19 +130,33 @@ public class JevaKey {
         return keyReleased;
     }
 
-
     protected void clearKeyStates(boolean absolute) {
-        _keysPressed.forEach((_keyCode, _keyState) -> {
-            if (_keyState == _keyStates.down)
-                _keysPressed.put(_keyCode, _keyStates.up);
-        });
-        _keysReleased.forEach((_keyCode, _keyState) -> {
-            _keysReleased.put(_keyCode, _keyStates.nil);
-        });
+        for (Map.Entry<String, _keyStates> entry : _keysPressed.entrySet()) {
+            // String _keyCode = entry.getKey();
+            // _keyStates _keyState = entry.getValue();
+            // _keysPressed.forEach((_keyCode, _keyState) -> {
+            if (entry.getValue() == _keyStates.down)
+                entry.setValue(_keyStates.up);
+            // if (_keyState == _keyStates.down)
+            // _keysPressed.put(_keyCode, _keyStates.up);
+        }
+
+        for (Map.Entry<String, _keyStates> entry : _keysReleased.entrySet()) {
+            entry.setValue(_keyStates.nil);
+            // String _keyCode = entry.getKey();
+            // _keyStates _keyState = entry.getValue();
+            // _keysReleased.forEach((_keyCode, _keyState) -> {
+            // _keysReleased.put(_keyCode, _keyStates.nil);
+        }
         if (absolute)
-            _keysList.forEach((_keyCode, _keyState) -> {
-                _keysList.put(_keyCode, _keyStates.nil);
-            });
+
+            for (Map.Entry<String, _keyStates> entry : _keysList.entrySet()) {
+                entry.setValue(_keyStates.nil);
+                // String _keyCode = entry.getKey();
+                // _keyStates _keyState = entry.getValue();
+                // _keysList.forEach((_keyCode, _keyState) -> {
+                // _keysList.put(_keyCode, _keyStates.nil);
+            }
     }
 
     protected void expireKeyPressedStates() {

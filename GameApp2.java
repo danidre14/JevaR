@@ -19,8 +19,9 @@ public class GameApp2 {
     public static void main(String[] args) {
         int initWidth = 1420;
         int initHeight = 800;
-        int initFps = 60;
-        new JevaR(initWidth, initHeight, initFps, (jevar) -> {
+        int initFps = 120;
+        int initTps = 120;
+        new JevaR(initWidth, initHeight, initFps, initTps, (jevar) -> {
             JevaMeta meta = jevar.meta;
             JevaMouse mouse = jevar.mouse;
             JevaKey key = jevar.key;
@@ -114,7 +115,8 @@ public class GameApp2 {
                             JevaText clip = (JevaText) self;
 
                             clip._text = "Mouse: [" + mouse._xmouse + ":" + mouse._ymouse + "]" + "\n\nFPS: ["
-                                    + jevar.getFPS() + "]";
+                            + jevar.getFPS() + "]" + "\nTPS: ["
+                            + jevar.getTPS() + "]";
                         });
                     });
 

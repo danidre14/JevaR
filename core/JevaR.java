@@ -27,8 +27,10 @@ public class JevaR implements Runnable {
     public JevaMeta meta;
 
     private int desiredFps;
-    private int currentFps;
-    private double deltaTime;
+    private int refreshRate;
+    private int desiredTps;
+    private int heartbeatRate;
+    private double _dt;
 
     private boolean debugMode;
 
@@ -37,6 +39,10 @@ public class JevaR implements Runnable {
     }
 
     public JevaR(int _width, int _height, int desiredFps, JevaRScript onLoad) {
+        this(_width, _height, desiredFps, desiredFps, onLoad);
+    }
+
+    public JevaR(int _width, int _height, int desiredFps, int desiredTps, JevaRScript onLoad) {
         screen = new JevaScreen(this, _width, _height);
 
         jevaclipLibrary = new HashMap<>();
@@ -56,12 +62,14 @@ public class JevaR implements Runnable {
 
         isRunning = false;
         this.desiredFps = desiredFps;
-        this.currentFps = desiredFps;
+        this.refreshRate = desiredFps;
+        this.desiredTps = desiredTps;
+        this.heartbeatRate = desiredTps;
 
         initScript = onLoad;
         isLoaded = false;
 
-        deltaTime = 0;
+        _dt = 0;
 
         debugMode = false;
 
@@ -414,11 +422,15 @@ public class JevaR implements Runnable {
     }
 
     public int getFPS() {
-        return currentFps;
+        return refreshRate;
+    }
+
+    public int getTPS() {
+        return heartbeatRate;
     }
 
     public double getDelta() {
-        return deltaTime / 1000000000.0;
+        return _dt;
     }
 
     private JevaClip getJevaClip(String name) {
@@ -454,7 +466,95 @@ public class JevaR implements Runnable {
         return jevasceneLibrary.get(_label) != null;
     }
 
+    public void run2() {
+        isRunning = true;
+
+        double t = 0.0;
+        double dt = 1.0 / desiredTps;
+        double df = 1.0 / desiredFps;
+
+        double currentTime = System.nanoTime();
+
+        long lastRendered = System.currentTimeMillis();
+
+        int frames = 0;
+        long lastCheck = System.currentTimeMillis();
+        int displayRate = 0;
+
+        while (isRunning) {
+            double newTime = System.nanoTime();
+            double frameTime = (newTime - currentTime) / 1000000000;
+            currentTime = newTime;
+
+            _dt = frameTime;
+            runEngine();
+            frames++;
+            t += dt;
+
+            if (System.currentTimeMillis() - lastCheck >= 1000) {
+                lastCheck = System.currentTimeMillis();
+                refreshRate = frames;
+                heartbeatRate = displayRate;
+                frames = 0;
+                displayRate = 0;
+            }
+
+            if (System.currentTimeMillis() - lastRendered >= (1000 / 120)) {
+                renderEngine();
+                displayRate++;
+                lastRendered = System.currentTimeMillis();
+            }
+        }
+    }
+
     public void run() {
+        isRunning = true;
+
+        double t = 0.0;
+        double dt = 1.0 / desiredTps;
+        double df = 1.0 / desiredFps;
+        _dt = dt;
+
+        double currentTime = System.nanoTime();
+        double tickAccumulator = 0.0;
+        double renderAccumulator = 0.0;
+
+        int frames = 0;
+        long lastCheck = System.currentTimeMillis();
+        int displayRate = 0;
+
+        while (isRunning) {
+            double newTime = System.nanoTime();
+            double frameTime = (newTime - currentTime) / 1000000000;
+            currentTime = newTime;
+
+            tickAccumulator += frameTime;
+            renderAccumulator += frameTime;
+
+            while (tickAccumulator >= dt) {
+                runEngine();
+                frames++;
+                tickAccumulator -= dt;
+                t += dt;
+            }
+
+            if (renderAccumulator >= df) {
+                renderEngine();
+                displayRate++;
+                renderAccumulator -= df;
+            }
+
+            if (System.currentTimeMillis() - lastCheck >= 1000) {
+                lastCheck = System.currentTimeMillis();
+                heartbeatRate = frames;
+                refreshRate = displayRate;
+                frames = 0;
+                displayRate = 0;
+            }
+        }
+    }
+
+    public void run3() {
         isRunning = true;
 
         double timePerFrame = 1000000000.0 / desiredFps;
@@ -464,12 +564,13 @@ public class JevaR implements Runnable {
         int frames = 0;
         long lastCheck = System.currentTimeMillis();
 
-        deltaTime = 0;
+        double deltaTime = 0;
 
         while (isRunning) {
             now = System.nanoTime();
             deltaTime = now - lastFrame;
             if (deltaTime >= timePerFrame) {
+                _dt = deltaTime / 1000000000.0;
                 lastFrame = now;
                 runEngine();
                 frames++;
@@ -477,9 +578,10 @@ public class JevaR implements Runnable {
 
             if (System.currentTimeMillis() - lastCheck >= 1000) {
                 lastCheck = System.currentTimeMillis();
-                currentFps = frames;
+                refreshRate = frames;
                 frames = 0;
             }
+            renderEngine();
         }
     }
 
@@ -488,7 +590,6 @@ public class JevaR implements Runnable {
         key.clearKeyStates(false);
         mouse.clearMouseStates(false);
         cleanUpEngine();
-        renderEngine();
     }
 
     private void loadEngine() {
