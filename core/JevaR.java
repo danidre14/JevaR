@@ -466,47 +466,6 @@ public class JevaR implements Runnable {
         return jevasceneLibrary.get(_label) != null;
     }
 
-    public void run2() {
-        isRunning = true;
-
-        double t = 0.0;
-        double dt = 1.0 / desiredTps;
-        double df = 1.0 / desiredFps;
-
-        double currentTime = System.nanoTime();
-
-        long lastRendered = System.currentTimeMillis();
-
-        int frames = 0;
-        long lastCheck = System.currentTimeMillis();
-        int displayRate = 0;
-
-        while (isRunning) {
-            double newTime = System.nanoTime();
-            double frameTime = (newTime - currentTime) / 1000000000;
-            currentTime = newTime;
-
-            _dt = frameTime;
-            runEngine();
-            frames++;
-            t += dt;
-
-            if (System.currentTimeMillis() - lastCheck >= 1000) {
-                lastCheck = System.currentTimeMillis();
-                refreshRate = frames;
-                heartbeatRate = displayRate;
-                frames = 0;
-                displayRate = 0;
-            }
-
-            if (System.currentTimeMillis() - lastRendered >= (1000 / 120)) {
-                renderEngine();
-                displayRate++;
-                lastRendered = System.currentTimeMillis();
-            }
-        }
-    }
-
     public void run() {
         isRunning = true;
 
@@ -551,37 +510,6 @@ public class JevaR implements Runnable {
                 frames = 0;
                 displayRate = 0;
             }
-        }
-    }
-
-    public void run3() {
-        isRunning = true;
-
-        double timePerFrame = 1000000000.0 / desiredFps;
-        long lastFrame = System.nanoTime();
-        long now = System.nanoTime();
-
-        int frames = 0;
-        long lastCheck = System.currentTimeMillis();
-
-        double deltaTime = 0;
-
-        while (isRunning) {
-            now = System.nanoTime();
-            deltaTime = now - lastFrame;
-            if (deltaTime >= timePerFrame) {
-                _dt = deltaTime / 1000000000.0;
-                lastFrame = now;
-                runEngine();
-                frames++;
-            }
-
-            if (System.currentTimeMillis() - lastCheck >= 1000) {
-                lastCheck = System.currentTimeMillis();
-                refreshRate = frames;
-                frames = 0;
-            }
-            renderEngine();
         }
     }
 
