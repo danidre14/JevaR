@@ -13,10 +13,12 @@ import java.awt.Image;
  */
 
 public class JevaGraphic {
+	protected static String sourcePath = "images/";
     private Image source;
 	protected JevaGraphic(String fileName) {
-        String path = "images/";
-        source = loadImage(path.concat(fileName));
+        String path = sourcePath;
+		String filePath = path.concat(fileName);		
+        source = loadImage(filePath);
 	}
 
 	private static Image loadImage(String fileName) {

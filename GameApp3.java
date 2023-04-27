@@ -9,16 +9,18 @@ import core.JevaSound;
 import core.JevaMeta;
 import core.JevaSpriteSheet;
 import core.JevaText;
+import core.JevaTileMap;
 import core.JevaVCam;
 
 import java.awt.*;
 import java.io.IOException;
 
-public class GameApp2 {
+public class GameApp3 {
 
     public static void main(String[] args) {
         int initWidth = 1420;
         int initHeight = 800;
+        int tileSize = 100;
         int initFps = 120;
         int initTps = 120;
         new JevaR(initWidth, initHeight, initFps, initTps, (jevar) -> {
@@ -29,10 +31,35 @@ public class GameApp2 {
             jevar.createGraphic("player2");
             jevar.createGraphic("background", "background.jpg");
 
+            jevar.createTileMap("map1", 150, 3, tileSize, tileSize, (loaded_self) -> {
+                JevaTileMap loaded_clip = (JevaTileMap) loaded_self;
+
+                loaded_clip.setInstanceName("tileMap");
+
+                String[] map = {
+                    "0000000",
+                    "0000000",
+                    "0002000",
+                    "0000000",
+                    "1111111",
+                };
+
+                loaded_clip.setTileMapEnum('0', "player1");
+                loaded_clip.setTileMapEnum('1', "player2");
+
+                loaded_clip.setTileTypeEnum('0', "air");
+                loaded_clip.setTileTypeEnum('1', "floor");
+
+                loaded_clip.loadMapFrom2DArray(map);
+
+            });
+
             jevar.createPrefab("player1", initWidth - 100, 350, 100, 100, (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
 
                 JevaVCam vcam = jevar.getVCam("myCam2");
+
+                JevaTileMap map = (JevaTileMap) jevar.getJevaClip("tileMap");
 
                 // loaded_clip.centerAnchors();
                 loaded_clip.props.setAnchorX(0.5);
@@ -55,6 +82,9 @@ public class GameApp2 {
                     }
                     if (key.isDown(JevaKey.DOWN)) {
                         clip.props._y += playerSpeed;
+                    }
+                    if(map != null && map.hitTest(clip.props._x, clip.props._y, "floor")) {
+                        clip.props._y -= playerSpeed;
                     }
                     if (vcam != null) {
                         vcam.projection._x = clip.props._x;
@@ -108,7 +138,7 @@ public class GameApp2 {
                         ((JevaText) loaded_self).props._x = initWidth / 2;
                         ((JevaText) loaded_self).props._y = 40;
                         ((JevaText) loaded_self).props.setAnchorX(0.5);
-                        // ((JevaText) loaded_self).setAnchorY(1);
+                        // ((JevaText) loaded_self).props.setAnchorY(1);
 
                         ((JevaText) loaded_self).addJevascript((self) -> {
 
@@ -139,6 +169,7 @@ public class GameApp2 {
                 JevaScene scene = (JevaScene) s;
 
                 scene.addPrefab("background");
+                scene.addTileMap("map1");
                 scene.addPrefab("player1");
                 scene.addPrefab("player2");
                 scene.addText("textfield1");

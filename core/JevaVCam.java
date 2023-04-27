@@ -10,14 +10,14 @@ public class JevaVCam {
     private String _label;
     private JevaR core;
     // projection: the piece of the world being drawn
-    public double _pX, _pY, _pWidth, _pHeight, _pScaleX, _pScaleY;
-    private double _pAnchorX, _pAnchorY;
+    public JevaClipProps projection;
     // viewport: the position of the screen displaying drawing
-    public double _vX, _vY, _vWidth, _vHeight, _vScaleX, _vScaleY;
-    private double _vAnchorX, _vAnchorY;
+    public JevaClipProps viewport;
 
     private int defaultStageWidth;
     private int defaultStageHeight;
+
+    public JevaState state;
 
     private BufferedImage vcamCanvas;
 
@@ -29,27 +29,15 @@ public class JevaVCam {
             double _vY, double _vWidth, double _vHeight) {
         this.core = core;
         this._label = _label;
-        this._pX = _pX;
-        this._pY = _pY;
-        this._pWidth = _pWidth;
-        this._pHeight = _pHeight;
-        this._pAnchorX = 0;
-        this._pAnchorY = 0;
-        this._pScaleX = 1;
-        this._pScaleY = 1;
-        this._vX = _vX;
-        this._vY = _vY;
-        this._vWidth = _vWidth;
-        this._vHeight = _vHeight;
-        this._vAnchorX = 0;
-        this._vAnchorY = 0;
-        this._vScaleX = 1;
-        this._vScaleY = 1;
+        this.projection = new JevaClipProps(_pX, _pY, _pWidth, _pHeight);
+        this.viewport = new JevaClipProps(_vX, _vY, _vWidth, _vHeight);
 
         defaultStageWidth = core.screen.getWidth();
         defaultStageHeight = core.screen.getHeight();
 
-        vcamCanvas = new BufferedImage(defaultStageWidth, defaultStageHeight, BufferedImage.TYPE_INT_RGB);
+        state = new JevaState();
+
+        vcamCanvas = new BufferedImage(defaultStageWidth, defaultStageHeight, BufferedImage.TYPE_INT_ARGB);
     }
 
     // adding jobtives
@@ -67,12 +55,12 @@ public class JevaVCam {
 
     private void setProjector(Graphics2D vcamCtx) {
 
-        double projectorScaleW = defaultStageWidth / _pWidth;
-        double projectorScaleH = defaultStageHeight / _pHeight;
-        double projectorOffsetX = (defaultStageWidth) * (_pAnchorX / 1.0);
-        double projectorOffsetY = (defaultStageHeight) * (_pAnchorY / 1.0);
-        double projectorScaleX = 1 / _pScaleX;
-        double projectorScaleY = 1 / _pScaleY;
+        double projectorScaleW = defaultStageWidth / projection._width;
+        double projectorScaleH = defaultStageHeight / projection._height;
+        double projectorOffsetX = (defaultStageWidth) * (projection._anchorX / 1.0);
+        double projectorOffsetY = (defaultStageHeight) * (projection._anchorY / 1.0);
+        double projectorScaleX = 1 / projection._scaleX;
+        double projectorScaleY = 1 / projection._scaleY;
 
         projectMatrix(vcamCtx,
                 projectorOffsetX,
@@ -80,50 +68,50 @@ public class JevaVCam {
                 projectorScaleX * projectorScaleW,
                 projectorScaleY * projectorScaleH,
                 0,
-                _pX,
-                _pY);
+                projection._x,
+                projection._y);
     }
 
     private void displayViewport(Graphics2D ctx) {
-        int _vX = JevaUtils.roundInt(this._vX);
-        int _vY = JevaUtils.roundInt(this._vY);
-        int _vWidth = JevaUtils.roundInt(this._vWidth * this._vScaleX);
-        int _vHeight = JevaUtils.roundInt(this._vHeight * this._vScaleY);
-        int vOffsetX = JevaUtils.roundInt(this._vAnchorX * _vWidth);
-        int vOffsetY = JevaUtils.roundInt(this._vAnchorY * _vHeight);
+        int _vX = JevaUtils.roundInt(viewport._x);
+        int _vY = JevaUtils.roundInt(viewport._y);
+        int _vWidth = JevaUtils.roundInt(viewport._width * viewport._scaleX);
+        int _vHeight = JevaUtils.roundInt(viewport._height * viewport._scaleY);
+        int vOffsetX = JevaUtils.roundInt(viewport._anchorX * _vWidth);
+        int vOffsetY = JevaUtils.roundInt(viewport._anchorY * _vHeight);
 
         ctx.drawImage(vcamCanvas, _vX - vOffsetX, _vY - vOffsetY, _vWidth, _vHeight, null);
     }
 
     public void centerPAnchors() {
-        double xDiff = 0.5 - _pAnchorX;
-        double yDiff = 0.5 - _pAnchorY;
+        double xDiff = 0.5 - projection._anchorX;
+        double yDiff = 0.5 - projection._anchorY;
 
-        double xDiffOffset = (_pWidth * _vScaleX) * xDiff;
-        double yDiffOffset = (_pHeight * _vScaleY) * yDiff;
+        double xDiffOffset = (projection._width * viewport._scaleX) * xDiff;
+        double yDiffOffset = (projection._height * viewport._scaleY) * yDiff;
 
-        _pX += xDiffOffset;
-        _pY += yDiffOffset;
+        projection._x += xDiffOffset;
+        projection._y += yDiffOffset;
 
-        setPAnchorX(0.5);
-        setPAnchorY(0.5);
+        projection.setAnchorX(0.5);
+        projection.setAnchorY(0.5);
     }
 
     public void centerVAnchors() {
-        double xDiff = 0.5 - _vAnchorX;
-        double yDiff = 0.5 - _vAnchorY;
+        double xDiff = 0.5 - viewport._anchorX;
+        double yDiff = 0.5 - viewport._anchorY;
 
-        double xDiffOffset = (_vWidth * _vScaleX) * xDiff;
-        double yDiffOffset = (_vHeight * _vScaleY) * yDiff;
+        double xDiffOffset = (viewport._width * viewport._scaleX) * xDiff;
+        double yDiffOffset = (viewport._height * viewport._scaleY) * yDiff;
 
-        _vX += xDiffOffset;
-        _vY += yDiffOffset;
+        viewport._x += xDiffOffset;
+        viewport._y += yDiffOffset;
 
-        setVAnchorX(0.5);
-        setVAnchorY(0.5);
+        viewport.setAnchorX(0.5);
+        viewport.setAnchorY(0.5);
     }
 
-    protected void render(Graphics2D ctx) {
+    protected void render(Graphics2D ctx, JevaClipProps parentProps) {
         Graphics2D vcamCtx = getClearViewport();
 
         setProjector(vcamCtx);
@@ -132,13 +120,23 @@ public class JevaVCam {
         if (core.getCurrentScene() != null)
             for (JevaClip jevaclip : core.getCurrentScene().sceneclipHierarchy.values()) {
                 if (hitTest(jevaclip)) {
-                    jevaclip.render(vcamCtx);
+                    if (jevaclip instanceof JevaTileMap)
+                        ((JevaTileMap) jevaclip).render(vcamCtx, getProjectorBoundingRectangle());
+                    else if (jevaclip instanceof JevaText)
+                        ((JevaText) jevaclip).render(vcamCtx, parentProps);
+                    else
+                        jevaclip.render(vcamCtx, parentProps);
                 }
             }
         // render attached jevaclips
         for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
             if (hitTest(jevaclip)) {
-                jevaclip.render(vcamCtx);
+                if (jevaclip instanceof JevaTileMap)
+                    ((JevaTileMap) jevaclip).render(vcamCtx, getProjectorBoundingRectangle());
+                else if (jevaclip instanceof JevaText)
+                    ((JevaText) jevaclip).render(vcamCtx, parentProps);
+                else
+                    jevaclip.render(vcamCtx, parentProps);
             }
         }
 
@@ -195,26 +193,26 @@ public class JevaVCam {
     }
 
     protected Rectangle2D.Double getProjectorBoundingRectangle() {
-        double _width = this._pWidth * this._pScaleX;
-        double _height = this._pHeight * this._pScaleY;
-        double offsetX = this._pAnchorX * _width;
-        double offsetY = this._pAnchorY * _height;
+        double _width = projection._width * projection._scaleX;
+        double _height = projection._height * projection._scaleY;
+        double offsetX = projection._anchorX * _width;
+        double offsetY = projection._anchorY * _height;
         double w = Math.max(Math.abs(_width), 1);
         double h = Math.max(Math.abs(_height), 1);
-        double x = _width >= 0 ? _pX : _pX - w;
-        double y = _height >= 0 ? _pY : _pY - h;
+        double x = _width >= 0 ? projection._x : projection._x - w;
+        double y = _height >= 0 ? projection._y : projection._y - h;
         return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
     protected Rectangle2D.Double getViewportBoundingRectangle() {
-        double _width = this._vWidth * this._vScaleX;
-        double _height = this._vHeight * this._vScaleY;
-        double offsetX = this._vAnchorX * _width;
-        double offsetY = this._vAnchorY * _height;
+        double _width = viewport._width * viewport._scaleX;
+        double _height = viewport._height * viewport._scaleY;
+        double offsetX = viewport._anchorX * _width;
+        double offsetY = viewport._anchorY * _height;
         double w = Math.max(Math.abs(_width), 1);
         double h = Math.max(Math.abs(_height), 1);
-        double x = _width >= 0 ? _vX : _vX - w;
-        double y = _height >= 0 ? _vY : _vY - h;
+        double x = _width >= 0 ? viewport._x : viewport._x - w;
+        double y = _height >= 0 ? viewport._y : viewport._y - h;
         return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
@@ -236,47 +234,15 @@ public class JevaVCam {
         return thisRect.contains(x, y);
     }
 
-    public double getPAnchorX() {
-        return _pAnchorX;
-    }
-
-    public void setPAnchorX(double value) {
-        _pAnchorX = Math.min(1, Math.max(0, value));
-    }
-
-    public double getPAnchorY() {
-        return _pAnchorY;
-    }
-
-    public void setPAnchorY(double value) {
-        _pAnchorY = Math.min(1, Math.max(0, value));
-    }
-
-    public double getVAnchorX() {
-        return _vAnchorX;
-    }
-
-    public void setVAnchorX(double value) {
-        _vAnchorX = Math.min(1, Math.max(0, value));
-    }
-
-    public double getVAnchorY() {
-        return _vAnchorY;
-    }
-
-    public void setVAnchorY(double value) {
-        _vAnchorY = Math.min(1, Math.max(0, value));
-    }
-
     protected void setVCamMouseCoords(double _x, double _y) {
         double x = _x;
         double y = _y;
 
-        double viewportWidth = this._vWidth * this._vScaleX;
-        double viewportHeight = this._vHeight * this._vScaleY;
+        double viewportWidth = viewport._width * viewport._scaleX;
+        double viewportHeight = viewport._height * viewport._scaleY;
 
-        double viewportOffsetX = viewportWidth * this._vAnchorX;
-        double viewportOffsetY = viewportHeight * this._vAnchorY;
+        double viewportOffsetX = viewportWidth * viewport._anchorX;
+        double viewportOffsetY = viewportHeight * viewport._anchorY;
 
         double viewportScaleX = (viewportWidth / defaultStageWidth);
         if (viewportScaleX == 0)
@@ -286,27 +252,27 @@ public class JevaVCam {
         if (viewportScaleY == 0)
             viewportScaleY = 1;
 
-        x -= _vX - viewportOffsetX;
-        y -= _vY - viewportOffsetY;
+        x -= viewport._x - viewportOffsetX;
+        y -= viewport._y - viewportOffsetY;
 
         x /= viewportScaleX;
         y /= viewportScaleY;
 
-        double projectorOffsetX = (defaultStageWidth) * (_pAnchorX / 1.0);
-        double projectorOffsetY = (defaultStageHeight) * (_pAnchorY / 1.0);
+        double projectorOffsetX = (defaultStageWidth) * (projection._anchorX / 1.0);
+        double projectorOffsetY = (defaultStageHeight) * (projection._anchorY / 1.0);
         x -= projectorOffsetX;
         y -= projectorOffsetY;
 
-        double projectorScaleW = defaultStageWidth / _pWidth;
-        double projectorScaleH = defaultStageHeight / _pHeight;
+        double projectorScaleW = defaultStageWidth / projection._width;
+        double projectorScaleH = defaultStageHeight / projection._height;
 
-        double projectorScaleX = 1 / _pScaleX;
-        double projectorScaleY = 1 / _pScaleY;
+        double projectorScaleX = 1 / projection._scaleX;
+        double projectorScaleY = 1 / projection._scaleY;
         x /= projectorScaleW * projectorScaleX;
         y /= projectorScaleH * projectorScaleY;
 
-        x += _pX;
-        y += _pY;
+        x += projection._x;
+        y += projection._y;
 
         _xmouse = (int) x;
         _ymouse = (int) y;
@@ -317,25 +283,25 @@ public class JevaVCam {
         properties = properties.concat("Label: " + _label + "\n");
 
         properties = properties.concat("Projector: {\n");
-        properties = properties.concat(" - x: " + _pX + "\n");
-        properties = properties.concat(" - y: " + _pY + "\n");
-        properties = properties.concat(" - w: " + _pWidth + "\n");
-        properties = properties.concat(" - h: " + _pHeight + "\n");
-        properties = properties.concat(" - anchor x: " + _pAnchorX + "\n");
-        properties = properties.concat(" - anchor y: " + _pAnchorY + "\n");
-        properties = properties.concat(" - scale x: " + _pScaleX + "\n");
-        properties = properties.concat(" - scale y: " + _pScaleY + "\n");
+        properties = properties.concat(" - x: " + projection._x + "\n");
+        properties = properties.concat(" - y: " + projection._y + "\n");
+        properties = properties.concat(" - w: " + projection._width + "\n");
+        properties = properties.concat(" - h: " + projection._height + "\n");
+        properties = properties.concat(" - anchor x: " + projection._anchorX + "\n");
+        properties = properties.concat(" - anchor y: " + projection._anchorY + "\n");
+        properties = properties.concat(" - scale x: " + projection._scaleX + "\n");
+        properties = properties.concat(" - scale y: " + projection._scaleY + "\n");
         properties = properties.concat("}\n\n");
 
         properties = properties.concat("Viewport: {\n");
-        properties = properties.concat(" - x: " + _vX + "\n");
-        properties = properties.concat(" - y: " + _vY + "\n");
-        properties = properties.concat(" - w: " + _vWidth + "\n");
-        properties = properties.concat(" - h: " + _vHeight + "\n");
-        properties = properties.concat(" - anchor x: " + _vAnchorX + "\n");
-        properties = properties.concat(" - anchor y: " + _vAnchorY + "\n");
-        properties = properties.concat(" - scale x: " + _vScaleX + "\n");
-        properties = properties.concat(" - scale y: " + _vScaleY + "\n");
+        properties = properties.concat(" - x: " + viewport._x + "\n");
+        properties = properties.concat(" - y: " + viewport._y + "\n");
+        properties = properties.concat(" - w: " + viewport._width + "\n");
+        properties = properties.concat(" - h: " + viewport._height + "\n");
+        properties = properties.concat(" - anchor x: " + viewport._anchorX + "\n");
+        properties = properties.concat(" - anchor y: " + viewport._anchorY + "\n");
+        properties = properties.concat(" - scale x: " + viewport._scaleX + "\n");
+        properties = properties.concat(" - scale y: " + viewport._scaleY + "\n");
         properties = properties.concat("}\n\n");
 
         return properties;

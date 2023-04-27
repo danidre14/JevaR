@@ -4,18 +4,19 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*; // need this to respond to GUI events
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferStrategy;
 
 import javax.swing.*;
 
 public class JevaScreen extends JFrame implements KeyListener, MouseListener, MouseMotionListener {
     private JevaR core;
-    private JPanel gamePanel;
+    private Canvas gameCanvas;
     private Container gameContainer;
 
     protected int _width;
     protected int _height;
 
-    private BufferedImage offscreenCanvas;
+    private BufferStrategy offscreenCanvas;
 
     protected Color backgroundColor;
 
@@ -29,26 +30,24 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         backgroundColor = new Color(0, 128, 0);
         backgroundColor = Color.WHITE;
 
-        offscreenCanvas = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
-
         // create game panel
 
-        gamePanel = new JPanel();
+        gameCanvas = new Canvas();
         // gamePanel = new JPanel(new FlowLayout());
-        gamePanel.setPreferredSize(new Dimension(_width, _height));
-        gamePanel.setMinimumSize(new Dimension(_width, _height));
-        gamePanel.setBounds(0, 0, _width, _height);
+        gameCanvas.setPreferredSize(new Dimension(_width, _height));
+        gameCanvas.setMinimumSize(new Dimension(_width, _height));
+        gameCanvas.setBounds(0, 0, _width, _height);
         // gamePanel.setMaximumSize(new Dimension(_width, _height));
-        gamePanel.setBackground(backgroundColor);
+        gameCanvas.setBackground(backgroundColor);
 
-        gamePanel.addMouseListener(this);
-        gamePanel.addMouseMotionListener(this);
-        gamePanel.addKeyListener(this);
+        gameCanvas.addMouseListener(this);
+        gameCanvas.addMouseMotionListener(this);
+        gameCanvas.addKeyListener(this);
 
         gameContainer = getContentPane();
         // gameContainer.setLayout(new FlowLayout(FlowLayout.CENTER));
         // gameContainer.setPreferredSize(new Dimension(_width, _height));
-        gameContainer.add(gamePanel, 0);
+        gameContainer.add(gameCanvas, 0);
         // setLayout(new FlowLayout());
         // setPreferredSize(new Dimension(_width, _height));
         // add(gamePanel);
@@ -57,25 +56,32 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        pack();
         setVisible(true);
 
-        gamePanel.requestFocus();
+        gameCanvas.requestFocus();
+
+        offscreenCanvas = gameCanvas.getBufferStrategy();
+        if (offscreenCanvas == null) {
+            gameCanvas.createBufferStrategy(3);
+            offscreenCanvas = gameCanvas.getBufferStrategy();
+        }
     }
 
     protected Graphics2D getContext() {
-        return offscreenCanvas.createGraphics();
+        return (Graphics2D) offscreenCanvas.getDrawGraphics();
     }
 
     protected void drawScreen() {
-        Graphics2D g2 = (Graphics2D) gamePanel.getGraphics();
-        g2.drawImage(offscreenCanvas, 0, 0, null);
-        g2.dispose();
+        if (!offscreenCanvas.contentsLost())
+            offscreenCanvas.show();
     }
 
     protected void clearScreen() {
-        Graphics2D ctx = offscreenCanvas.createGraphics();
+        Graphics2D ctx = getContext();
 
-        Rectangle2D.Double screenBackground = new Rectangle2D.Double(0, 0, gamePanel.getWidth(), gamePanel.getHeight());
+        Rectangle2D.Double screenBackground = new Rectangle2D.Double(0, 0, gameCanvas.getWidth(),
+                gameCanvas.getHeight());
 
         ctx.setColor(Color.BLACK);
         // ctx.setColor(backgroundColor);
@@ -95,7 +101,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
 
-        System.out.println("Key being pressed- Code: " + keyCode + " Text: " + keyName);
+        // System.out.println("Key being pressed- Code: " + keyCode + " Text: " + keyName);
 
         if (key._keysList.get(keyCode) == JevaKey._keyStates.nil || key._keysList.get(keyCode) == null)
             key._keysList.put(keyCode, JevaKey._keyStates.down);
@@ -163,7 +169,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         String mouseName = code == MouseEvent.BUTTON1 ? "name_left"
                 : code == MouseEvent.BUTTON2 ? "name_middle" : code == MouseEvent.BUTTON3 ? "name_right" : "name_nil";
 
-        System.out.println("Mouse being pressed- Code: " + mouseCode + " Text: " + mouseName);
+        // System.out.println("Mouse being pressed- Code: " + mouseCode + " Text: " + mouseName);
 
         if (mouse._mouseList.get(mouseCode) == JevaMouse._mouseStates.nil
                 || mouse._mouseList.get(mouseCode) == null)
@@ -229,9 +235,20 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         mouse.setMouseCoords(x, y);
     }
 
+    protected Rectangle2D.Double getBoundingRectangle() {
+        return new Rectangle2D.Double(0, 0, getWidth(), getHeight());
+    }
+
     protected boolean hitTest(Rectangle2D.Double targetRect) {
-        Rectangle2D.Double thisRect = new Rectangle2D.Double(0, 0, getWidth(), getHeight());
+        Rectangle2D.Double thisRect = getBoundingRectangle();
 
         return thisRect.intersects(targetRect);
+    }
+
+    protected boolean hitTest(JevaClip other) {
+        Rectangle2D.Double thisRect = getBoundingRectangle();
+        Rectangle2D.Double otherRect = other.getBoundingRectangle();
+
+        return thisRect.intersects(otherRect);
     }
 }

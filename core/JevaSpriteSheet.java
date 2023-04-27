@@ -29,8 +29,8 @@ public class JevaSpriteSheet {
      * Adds an image to the animation with the specified
      * duration (time to display the image).
      */
-    protected synchronized void addFrame(String _label, long duration) {
-        JevaGraphic graphic = core.jevagraphicLibrary.get(_label);
+    public synchronized void addFrame(String _label, long duration) {
+        JevaGraphic graphic = core.getJevaGraphic(_label);
 
         if (graphic == null)
             return;
@@ -47,7 +47,7 @@ public class JevaSpriteSheet {
     protected synchronized void reset() {
         animTime = 0; // reset time animation has run for to zero
         currFrameIndex = 0; // reset current frame to first frame
-        startTime = System.currentTimeMillis(); // reset start time to current time
+        startTime = core.currentClockMillis(); // reset start time to current time
     }
 
     /**
@@ -55,7 +55,7 @@ public class JevaSpriteSheet {
      * neccesary.
      */
     protected synchronized void tick() {
-        long currTime = System.currentTimeMillis(); // find the current time
+        long currTime = core.currentClockMillis(); // find the current time
         long elapsedTime = currTime - startTime; // find how much time has elapsed since last update
         startTime = currTime; // set start time to current time
 

@@ -9,16 +9,19 @@ public class JevaClip {
     private String _label;
     protected JevaR core;
 
+    public JevaClipProps props;
+
+    protected LinkedHashMap<String, JevaClip> clipsContainer;
+
     private boolean markedForDeletion;
 
     public boolean preserve;
 
-    public double _x, _y, _width, _height;
-    protected double _anchorX, _anchorY;
-    public double _scaleX, _scaleY;
-    public String _instanceName;
+    protected String _instanceName;
 
     protected boolean isLoaded;
+
+    public JevaState state;
 
     protected ArrayList<JevaScript> _onLoadScripts;
     protected ArrayList<JevaScript> _scriptsList;
@@ -36,14 +39,10 @@ public class JevaClip {
             ArrayList<JevaScript> onLoads) {
         this.core = core;
         this._label = _label;
-        this._x = _x;
-        this._y = _y;
-        this._width = _width;
-        this._height = _height;
-        this._anchorX = 0;
-        this._anchorY = 0;
-        this._scaleX = 1;
-        this._scaleY = 1;
+        props = new JevaClipProps(_x, _y, _width, _height);
+
+        clipsContainer = new LinkedHashMap<>();
+
         this._instanceName = "";
 
         _onLoadScripts = onLoads;
@@ -51,7 +50,24 @@ public class JevaClip {
         preserve = false;
         markedForDeletion = false;
 
+        state = new JevaState();
+
         _scriptsList = new ArrayList<>();
+    }
+
+    public JevaClip extend(String _label) {
+        if (isLoaded)
+            return this;
+
+        JevaClip superClip = core.jevaclipLibrary.get(_label);
+        if (superClip == null)
+            return this;
+
+        for (JevaScript script : superClip._onLoadScripts) {
+            script.call(this);
+        }
+
+        return this;
     }
 
     protected void load() {
@@ -60,6 +76,11 @@ public class JevaClip {
         for (JevaScript script : _onLoadScripts) {
             script.call(this);
         }
+
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            jevaclip.load();
+        }
+
         isLoaded = true;
         markedForDeletion = false;
     }
@@ -67,6 +88,19 @@ public class JevaClip {
     protected void unload() {
         if (!isLoaded)
             return;
+
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            if (!jevaclip.preserve) {
+                jevaclip.unload();
+                // delete from heirarchy
+            }
+        }
+
+        // delete all unpreserved jevaclips from hierarchy
+        clipsContainer.entrySet().removeIf(e -> {
+            JevaClip jevaclip = e.getValue();
+            return jevaclip.preserve == false;
+        });
 
         isLoaded = false;
     }
@@ -82,20 +116,6 @@ public class JevaClip {
         addJevascript(script);
     }
 
-    public void centerAnchors() {
-        double xDiff = 0.5 - _anchorX;
-        double yDiff = 0.5 - _anchorY;
-
-        double xDiffOffset = (_width * _scaleX) * xDiff;
-        double yDiffOffset = (_height * _scaleY) * yDiff;
-
-        _x += xDiffOffset;
-        _y += yDiffOffset;
-
-        setAnchorX(0.5);
-        setAnchorY(0.5);
-    }
-
     public void addJevascript(JevaScript script) {
         _scriptsList.add(script);
     }
@@ -107,23 +127,28 @@ public class JevaClip {
         for (JevaScript script : _scriptsList) {
             script.call(this);
         }
+
+        // updating all added jevaclips
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            jevaclip.tick();
+        }
     }
 
-    protected void render(Graphics2D ctx) {
-        if (!isLoaded || shouldRemove())
+    protected void render(Graphics2D ctx, JevaClipProps parentProps) {
+        if (!isLoaded || shouldRemove() || !props._visible)
             return;
-        int _x = JevaUtils.roundInt(this._x);
-        int _y = JevaUtils.roundInt(this._y);
-        int _width = JevaUtils.roundInt(this._width * this._scaleX);
-        int _height = JevaUtils.roundInt(this._height * this._scaleY);
-        int offsetX = JevaUtils.roundInt(this._anchorX * _width);
-        int offsetY = JevaUtils.roundInt(this._anchorY * _height);
+        int _x = JevaUtils.roundInt((props._x));
+        int _y = JevaUtils.roundInt((props._y));
+        int _width = JevaUtils.roundInt((props._width * props._scaleX));
+        int _height = JevaUtils.roundInt((props._height * props._scaleY));
+        int offsetX = JevaUtils.roundInt((props._anchorX * _width));
+        int offsetY = JevaUtils.roundInt((props._anchorY * _height));
         int w = Math.max(Math.abs(_width), 1);
         int h = Math.max(Math.abs(_height), 1);
         int x = _width >= 0 ? _x : _x - w;
         int y = _height >= 0 ? _y : _y - h;
 
-        BufferedImage painting = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        BufferedImage painting = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
         AffineTransform at = new AffineTransform();
         if (_width < 0) {
@@ -154,6 +179,22 @@ public class JevaClip {
         pCtx.dispose();
     }
 
+    protected void cleanUp() {
+        if (!isLoaded)
+            return;
+
+        // delete all jevaclips markedForDeletion from hierarchy
+        clipsContainer.entrySet().removeIf(e -> {
+            JevaClip jevaclip = e.getValue();
+            return jevaclip.shouldRemove();
+        });
+
+        // deleting all nested jevaclips markedForDeletion from hierarchy
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            jevaclip.cleanUp();
+        }
+    }
+
     public void remove() {
         markedForDeletion = true;
     }
@@ -163,19 +204,19 @@ public class JevaClip {
     }
 
     protected Rectangle2D.Double getBoundingRectangle() {
-        double _width = this._width * this._scaleX;
-        double _height = this._height * this._scaleY;
-        double offsetX = this._anchorX * _width;
-        double offsetY = this._anchorY * _height;
+        double _width = props._width * props._scaleX;
+        double _height = props._height * props._scaleY;
+        double offsetX = props._anchorX * _width;
+        double offsetY = props._anchorY * _height;
         double w = Math.max(Math.abs(_width), 1);
         double h = Math.max(Math.abs(_height), 1);
-        double x = _width >= 0 ? _x : _x - w;
-        double y = _height >= 0 ? _y : _y - h;
+        double x = _width >= 0 ? props._x : props._x - w;
+        double y = _height >= 0 ? props._y : props._y - h;
         return new Rectangle2D.Double(x - offsetX, y - offsetY, w, h);
     }
 
     public boolean hitTest(JevaClip other) {
-        if (shouldRemove() || other.shouldRemove())
+        if (shouldRemove() || other.shouldRemove() || !props._visible || !other.props._visible)
             return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         Rectangle2D.Double otherRect = other.getBoundingRectangle();
@@ -184,30 +225,34 @@ public class JevaClip {
     }
 
     public boolean hitTest(Rectangle2D.Double targetRect) {
-        if (shouldRemove())
+        if (shouldRemove() || !props._visible)
             return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
 
         return thisRect.intersects(targetRect);
     }
 
-    public boolean hitTest(int x, int y) {
-        if (shouldRemove())
+    public boolean hitTest(double x, double y) {
+        if (shouldRemove() || !props._visible)
             return false;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         return thisRect.contains(x, y);
     }
 
     public boolean hitTest(String _label) {
-        if (shouldRemove())
-            return false;
+        return hitTestGet(_label) != null;
+    }
+
+    public JevaClip hitTestGet(String _label) {
+        if (shouldRemove() || !props._visible)
+            return null;
         Rectangle2D.Double thisRect = getBoundingRectangle();
         for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
             if ((jevaclip._label.equals(_label) || jevaclip._instanceName.equals(_label)) && jevaclip != this
                     && !jevaclip.shouldRemove()) {
                 Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                 if (thisRect.intersects(otherClipsRect)) {
-                    return true;
+                    return jevaclip;
                 }
             }
         }
@@ -217,26 +262,274 @@ public class JevaClip {
                         && !jevaclip.shouldRemove()) {
                     Rectangle2D.Double otherClipsRect = jevaclip.getBoundingRectangle();
                     if (thisRect.intersects(otherClipsRect)) {
-                        return true;
+                        return jevaclip;
                     }
                 }
             }
-        return false;
+        return null;
     }
 
-    public double getAnchorX() {
-        return _anchorX;
+    public String getInstanceName() {
+        return _instanceName;
     }
 
-    public void setAnchorX(double value) {
-        _anchorX = Math.min(1, Math.max(0, value));
+    public void setInstanceName(String name) {
+        _instanceName = name;
     }
 
-    public double getAnchorY() {
-        return _anchorY;
+    public JevaClip addPrefab(String _label) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        double _x = oldJevaclip.props._x;
+        double _y = oldJevaclip.props._y;
+        double _width = oldJevaclip.props._width;
+        double _height = oldJevaclip.props._height;
+
+        return this.addPrefab(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
     }
 
-    public void setAnchorY(double value) {
-        _anchorY = Math.min(1, Math.max(0, value));
+    public JevaClip addPrefab(String _label, double _x, double _y) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        double _width = oldJevaclip.props._width;
+        double _height = oldJevaclip.props._height;
+
+        return this.addPrefab(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addPrefab(String _label, double _x, double _y, double _width, double _height) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        return this.addPrefab(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addPrefab(String _label, double _x, double _y, double _width, double _height,
+            ArrayList<JevaScript> _onLoads) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        ArrayList<JevaScript> onLoads = oldJevaclip._onLoadScripts;
+        for (JevaScript _script : onLoads)
+            _onLoads.add(_script);
+
+        JevaClip jevaclip = new JevaPrefab(core, _label, _x, _y, _width, _height, _onLoads);
+
+        String id = JevaUtils.generateUUID();
+
+        // add JevaClip to scene's heirarchy
+        clipsContainer.put(id, jevaclip);
+
+        if (isLoaded)
+            jevaclip.load();
+
+        return jevaclip;
+    }
+
+    public JevaClip addPrefab(double _x, double _y, double _width, double _height) {
+        return this.addPrefab(_x, _y, _width, _height, JevaUtils.emptyScript);
+    }
+
+    public JevaClip addPrefab(double _x, double _y, double _width, double _height, String _scriptName) {
+        JevaScript script = core.jevascriptLibrary.get(_scriptName);
+        if (script == null)
+            script = JevaUtils.emptyScript;
+
+        return this.addPrefab(_x, _y, _width, _height, script);
+    }
+
+    public JevaClip addPrefab(double _x, double _y, double _width, double _height,
+            JevaScript onLoad) {
+        String id = JevaUtils.generateUUID();
+        JevaClip jevaclip = new JevaPrefab(core, id, _x, _y, _width, _height, onLoad);
+
+        // add JevaClip to scene's heirarchy
+        clipsContainer.put(id, jevaclip);
+
+        if (isLoaded)
+            jevaclip.load();
+
+        return jevaclip;
+    }
+
+    public JevaClip addText(String _label) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+        JevaText oldText = (JevaText) oldJevaclip;
+
+        if (oldText == null)
+            return oldText;
+
+        double _x = oldText.props._x;
+        double _y = oldText.props._y;
+        String _text = oldText.props._text;
+        double _width = oldText.props._width;
+        double _height = oldText.props._height;
+
+        return this.addText(_label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addText(String _label, String _text, double _x, double _y) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        double _width = oldJevaclip.props._width;
+        double _height = oldJevaclip.props._height;
+
+        return this.addText(_label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addText(String _label, String _text, double _x, double _y, double _width, double _height) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        return this.addText(_label, _text, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addText(String _label, String _text, double _x, double _y, double _width, double _height,
+            ArrayList<JevaScript> _onLoads) {
+        JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        ArrayList<JevaScript> onLoads = oldJevaclip._onLoadScripts;
+        for (JevaScript _script : onLoads)
+            _onLoads.add(_script);
+
+        JevaClip jevaclip = new JevaText(core, _label, _text, _x, _y, _width, _height, _onLoads);
+
+        String id = JevaUtils.generateUUID();
+
+        // add JevaClip to scene's heirarchy
+        clipsContainer.put(id, jevaclip);
+
+        if (isLoaded)
+            jevaclip.load();
+
+        return jevaclip;
+    }
+
+    public JevaClip addText(String _text, double _x, double _y, double _width, double _height) {
+        return this.addText(_text, _x, _y, _width, _height, JevaUtils.emptyScript);
+    }
+
+    public JevaClip addText(String _text, double _x, double _y, double _width, double _height, String _scriptName) {
+        JevaScript script = core.jevascriptLibrary.get(_scriptName);
+        if (script == null)
+            script = JevaUtils.emptyScript;
+
+        return this.addText(_text, _x, _y, _width, _height, script);
+    }
+
+    public JevaClip addText(String _text, double _x, double _y, double _width, double _height,
+            JevaScript onLoad) {
+        String id = JevaUtils.generateUUID();
+        JevaClip jevaclip = new JevaText(core, id, _text, _x, _y, _width, _height, onLoad);
+
+        // add JevaClip to scene's heirarchy
+        clipsContainer.put(id, jevaclip);
+
+        if (isLoaded)
+            jevaclip.load();
+
+        return jevaclip;
+    }
+
+    public JevaClip addTileMap(String _label) {
+        JevaTileMap oldJevaclip = (JevaTileMap) core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        double _x = oldJevaclip.props._x;
+        double _y = oldJevaclip.props._y;
+        int _tileWidth = JevaUtils.roundInt(oldJevaclip._tileWidth);
+        int _tileHeight = JevaUtils.roundInt(oldJevaclip._tileHeight);
+
+        return this.addTileMap(_label, _x, _y, _tileWidth, _tileHeight, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addTileMap(String _label, double _x, double _y) {
+        JevaTileMap oldJevaclip = (JevaTileMap) core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        int _tileWidth = JevaUtils.roundInt(oldJevaclip._tileWidth);
+        int _tileHeight = JevaUtils.roundInt(oldJevaclip._tileHeight);
+
+        return this.addTileMap(_label, _x, _y, _tileWidth, _tileHeight, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addTileMap(String _label, double _x, double _y, int _tileWidth, int _tileHeight) {
+        JevaTileMap oldJevaclip = (JevaTileMap) core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        return this.addTileMap(_label, _x, _y, _tileWidth, _tileHeight, new ArrayList<>(Arrays.asList()));
+    }
+
+    public JevaClip addTileMap(String _label, double _x, double _y, int _tileWidth, int _tileHeight,
+            ArrayList<JevaScript> _onLoads) {
+        JevaTileMap oldJevaclip = (JevaTileMap) core.jevaclipLibrary.get(_label);
+
+        if (oldJevaclip == null)
+            return oldJevaclip;
+
+        ArrayList<JevaScript> onLoads = oldJevaclip._onLoadScripts;
+        for (JevaScript _script : onLoads)
+            _onLoads.add(_script);
+
+        JevaClip jevaclip = new JevaTileMap(core, _label, _x, _y, _tileWidth, _tileHeight, _onLoads);
+
+        String id = JevaUtils.generateUUID();
+
+        // add JevaClip to scene's heirarchy
+        clipsContainer.put(id, jevaclip);
+
+        jevaclip.load();
+
+        return jevaclip;
+    }
+
+    protected JevaClip getJevaClip(String name) {
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            if (jevaclip._instanceName.equals(name) && !jevaclip.shouldRemove())
+                return jevaclip;
+            JevaClip nestedClip = jevaclip.getJevaClip(name);
+            if (nestedClip != null)
+                return nestedClip;
+        }
+        return null;
+    }
+
+    protected void checkHovered(double x, double y, boolean isVisible) {
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            if (!jevaclip.shouldRemove()) {
+                if (jevaclip instanceof JevaText) {
+                    JevaText jevatext = (JevaText) jevaclip;
+                    jevatext.props._hovered = isVisible ? jevatext.hitTest(x + props._x, y + props._y) : false;
+                    jevatext.checkHovered(x + props._x, y + props._y, isVisible);
+                } else {
+                    jevaclip.props._hovered = isVisible ? jevaclip.hitTest(x + props._x, y + props._y) : false;
+                    jevaclip.checkHovered(x + props._x, y + props._y, isVisible);
+                }
+            }
+        }
     }
 }
