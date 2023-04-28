@@ -14,6 +14,8 @@ public class JevaSpriteSheet {
     private long animTime; // time that the animation has run for already
     private long startTime; // start time of the animation or time since last update
     private long totalDuration; // total duration of the animation
+    private int numLoops;
+    private int loopCount;
 
     /**
      * Creates a new, empty Animation.
@@ -22,6 +24,8 @@ public class JevaSpriteSheet {
         this.core = core;
         frames = new ArrayList<AnimFrame>();
         totalDuration = 0;
+        numLoops = 0;
+        loopCount = 0;
         _init.call(this);
     }
 
@@ -44,10 +48,12 @@ public class JevaSpriteSheet {
     /**
      * Starts this animation over from the beginning.
      */
-    protected synchronized void reset() {
+    protected synchronized void reset(int numLoops) {
         animTime = 0; // reset time animation has run for to zero
         currFrameIndex = 0; // reset current frame to first frame
         startTime = core.currentClockMillis(); // reset start time to current time
+        loopCount = 1;
+        this.numLoops = numLoops;
     }
 
     /**
@@ -63,7 +69,10 @@ public class JevaSpriteSheet {
             animTime += elapsedTime; // add elapsed time to amount of time animation has run for
             if (animTime >= totalDuration) { // if the time animation has run for > total duration
                 animTime = animTime % totalDuration; // reset time animation has run for
-                currFrameIndex = 0; // reset current frame to first frame
+                if (numLoops == 0 || loopCount < numLoops) {
+                    currFrameIndex = 0; // reset current frame to first frame
+                    loopCount++;
+                }
             }
 
             while (animTime > getFrame(currFrameIndex).endTime) {

@@ -3,13 +3,23 @@ package core;
 import javax.sound.sampled.AudioInputStream; // for playing sound clips
 import javax.sound.sampled.*;
 import java.io.*;
+import java.util.ArrayList;
 
 public class JevaSound {
+    protected static String sourcePath = "sounds/";
     private MultiClip source;
+    private static double masterVolume = 1;
+    private static ArrayList<MultiClip> multiClipReferences = new ArrayList<>();
+
+    protected JevaSound(String fileName) {
+        this(fileName, 1);
+    }
 
     protected JevaSound(String fileName, int amount) {
-        String path = "sounds/";
-        source = new MultiClip(path.concat(fileName), amount);
+        String path = sourcePath;
+        String filePath = path.concat(fileName);
+        source = new MultiClip(filePath, amount);
+        multiClipReferences.add(source);
     }
 
     private Clip loadClip(String fileName) { // gets clip from the specified file
@@ -31,24 +41,39 @@ public class JevaSound {
         return source;
     }
 
-    public void playOnce() {
+    public JevaSound playOnce() {
         source.playClip(false);
+        return this;
     }
 
-    public void playLoop(boolean looping) {
-        source.playClip(looping);
+    public JevaSound playLoop() {
+        source.playClip(true);
+        return this;
     }
 
-    public void pause() {
+    public JevaSound pause() {
         source.pauseClip();
+        return this;
     }
 
-    public void resume() {
+    public JevaSound resume() {
         source.resumeClip();
+        return this;
     }
 
-    public void stop() {
+    public JevaSound setVolume(double volume) {
+        if (source.getVolume() != volume)
+            source.setVolume(volume);
+        return this;
+    }
+
+    public double getVolume() {
+        return source.getVolume();
+    }
+
+    public JevaSound stop() {
         source.stopClip();
+        return this;
     }
 
     private class MultiClip {
@@ -59,12 +84,14 @@ public class JevaSound {
 
         private int maxClips;
         private int clipNum;
+        private double volume;
 
         private MultiClip(String fileName, int amount) {
             clipBag = new Clip[amount];
             clipFramePos = new int[amount];
             clipWasPlaying = new boolean[amount];
             clipLooping = new boolean[amount];
+
             for (int i = 0; i < amount; i++) {
                 Clip clip = loadClip(fileName);
                 clipBag[i] = clip;
@@ -75,6 +102,7 @@ public class JevaSound {
 
             maxClips = amount;
             clipNum = 0;
+            setVolume(1);
         }
 
         private void playClip(boolean looping) {
@@ -100,7 +128,7 @@ public class JevaSound {
         private void resumeClip() {
             if (maxClips == 1) {
                 playClip(false);
-            } else
+            } else {
                 for (int i = 0; i < maxClips; i++) {
                     if (clipWasPlaying[i]) {
                         clipBag[i].setFramePosition(clipFramePos[i]);
@@ -110,6 +138,28 @@ public class JevaSound {
                             clipBag[i].start();
                     }
                 }
+            }
+        }
+
+        private double getVolume() {
+            return this.volume;
+        }
+
+        private void setVolume(double volume) {
+            volume = JevaUtils.clampDouble(volume, 0, 1);
+            this.volume = volume;
+            updateVolume();
+        }
+
+        private void updateVolume() {
+            double volume = JevaUtils.clampDouble(this.volume * masterVolume, 0, 1);
+            double actual = JevaUtils.clampDouble(volume < 0.296 ? volume * 0.1 : Math.exp((volume * 5) - 5), 0, 1);
+            for (int i = 0; i < maxClips; i++) {
+                FloatControl gainControl = (FloatControl) clipBag[i].getControl(FloatControl.Type.MASTER_GAIN);
+                float gainValue = JevaUtils.clampFloat(20f * (float) Math.log10(actual), gainControl.getMinimum(),
+                        gainControl.getMaximum());
+                gainControl.setValue(gainValue);
+            }
         }
 
         private void stopClip() {
@@ -119,5 +169,18 @@ public class JevaSound {
                 clipLooping[i] = false;
             }
         }
+    }
+
+    public static double getMasterVolume() {
+        return masterVolume;
+    }
+
+    public static void setMasterVolume(double volume) {
+        volume = JevaUtils.clampDouble(volume, 0, 1);
+        masterVolume = volume;
+
+        ArrayList<MultiClip> multiClipReferencesTemp = new ArrayList<>(multiClipReferences);
+        for (MultiClip clip : multiClipReferencesTemp)
+            clip.updateVolume();
     }
 }

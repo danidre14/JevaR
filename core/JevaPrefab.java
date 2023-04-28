@@ -75,6 +75,10 @@ public class JevaPrefab extends JevaClip {
     }
 
     public void useSpriteSheet(String _label) {
+        useSpriteSheet(_label, 0);
+    }
+
+    public void useSpriteSheet(String _label, int numLoops) {
         if (appearanceName.equals(_label) && appearanceType == appearances.spritesheet)
             return;
         JevaSpriteSheet source = core.jevaspritesheetLibrary.get(_label);
@@ -82,7 +86,7 @@ public class JevaPrefab extends JevaClip {
         if (source == null)
             return;
 
-        source.reset();
+        source.reset(numLoops);
 
         appearanceName = _label;
         appearanceType = appearances.spritesheet;

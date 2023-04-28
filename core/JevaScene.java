@@ -12,6 +12,7 @@ public class JevaScene {
     public JevaState state;
 
     protected ArrayList<JevaScript> _onLoadScripts;
+    protected ArrayList<JevaScript> _onUnloadScripts;
     protected ArrayList<JevaScript> _scriptsList;
 
     protected LinkedHashMap<String, JevaClip> sceneclipHierarchy;
@@ -38,6 +39,7 @@ public class JevaScene {
         isLoaded = false;
 
         _scriptsList = new ArrayList<>();
+        _onUnloadScripts = new ArrayList<>();
     }
 
     protected void load() {
@@ -52,6 +54,19 @@ public class JevaScene {
         }
 
         isLoaded = true;
+    }
+
+    public void addUnload(String _label) {
+        JevaScript script = core.jevascriptLibrary.get(_label);
+
+        if (script == null)
+            return;
+
+        addUnload(script);
+    }
+
+    public void addUnload(JevaScript _unloadScript) {
+        _onUnloadScripts.add(_unloadScript);
     }
 
     protected void unload() {
@@ -70,6 +85,13 @@ public class JevaScene {
             JevaClip jevaclip = e.getValue();
             return jevaclip.preserve == false;
         });
+        
+        // call all unload methods
+        for (JevaScript script : _onUnloadScripts) {
+            script.call(this);
+        }
+        _onUnloadScripts = new ArrayList<>();
+        
         isLoaded = false;
     }
 
@@ -467,6 +489,10 @@ public class JevaScene {
             return;
 
         // delete all jevaclips markedForDeletion from hierarchy
+        for (JevaClip jevaclip : sceneclipHierarchy.values()) {
+            if (jevaclip.shouldRemove())
+                jevaclip.unload();
+        }
         sceneclipHierarchy.entrySet().removeIf(e -> {
             JevaClip jevaclip = e.getValue();
             return jevaclip.shouldRemove();

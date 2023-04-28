@@ -34,39 +34,55 @@ public class GameApp4 {
             JevaMouse mouse = jevar.mouse;
             JevaKey key = jevar.key;
 
+            jevar.createSound("open_chest_sfx");
+            jevar.createSound("skele_walk_sfx");
+            jevar.createSound("ghost_baddie_howl");
+            jevar.createSound("health_collected").setVolume(0.7);
+            jevar.createSound("background_music").setVolume(0.5);
+
             jevar.state.setInt("score", 10);
             jevar.state.setInt("maxHealth", 5);
             jevar.state.setInt("health", jevar.state.getInt("maxHealth"));
             jevar.state.setLong("levelStartTime", 0);
             jevar.state.setInt("levelMaxTime", 10);
 
+            jevar.getSound("background_music").playLoop();
+
             String[][][] worldMap = {
-                    { { "30" }, {
+                    { { "60" }, {
                             "2222222222222222222222",
-                            "2                   d2",
+                            "2                    d",
                             "2        t        2222",
-                            "2     3  2    B      2",
+                            "2     3  2    G      2",
                             "2     2  2   2222    2",
                             "2     2  2           2",
                             "2   2222222          2",
-                            "2                    2",
-                            "2t             B     2",
+                            "2          B         2",
+                            "2t             S     2",
                             "222    P     22222   2",
                             "2      11          c 2",
                             "2     1001c       2222",
                             "2   11000011         2",
                             "211100000000111    c 2",
                             "2000000000000001111112",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
                     }
                     },
-                    { { "10" }, {
+                    { { "60" }, {
                             "2222222222222222222222",
-                            "2                   d2",
+                            "2                    d",
                             "2         t       2222",
-                            "2      P  2          2",
+                            "2      P  2     B    2",
                             "2      2  2   222    2",
                             "2      2  2          2",
                             "2000000000000001111112",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
+                            "2000000000000000000002",
                     },
                     }
             };
@@ -97,6 +113,33 @@ public class GameApp4 {
                 spritesheet.addFrame("coin_anim_6", duration);
             });
 
+            jevar.createSpriteSheet("skele_walk_animation", (self) -> {
+                JevaSpriteSheet spritesheet = (JevaSpriteSheet) self;
+
+                int duration = 100;
+
+                spritesheet.addFrame("skele_walk_1", duration);
+                spritesheet.addFrame("skele_walk_2", duration);
+                spritesheet.addFrame("skele_walk_3", duration);
+                spritesheet.addFrame("skele_walk_4", duration);
+                spritesheet.addFrame("skele_walk_5", duration);
+                spritesheet.addFrame("skele_walk_6", duration);
+            });
+
+            jevar.createSpriteSheet("skele_dead_animation", (self) -> {
+                JevaSpriteSheet spritesheet = (JevaSpriteSheet) self;
+
+                int duration = 100;
+
+                spritesheet.addFrame("skele_dead_1", duration);
+                spritesheet.addFrame("skele_dead_2", duration);
+                spritesheet.addFrame("skele_dead_3", duration);
+                spritesheet.addFrame("skele_dead_4", duration);
+                spritesheet.addFrame("skele_dead_5", duration);
+                spritesheet.addFrame("skele_dead_6", duration);
+                spritesheet.addFrame("skele_dead_7", duration);
+            });
+
             jevar.createTileMap("worldMap", 150, 3, tileSize, tileSize, (loaded_self) -> {
                 JevaTileMap loaded_clip = (JevaTileMap) loaded_self;
                 loaded_clip.setInstanceName("worldMap");
@@ -112,7 +155,7 @@ public class GameApp4 {
                 jevar.state.setLong("levelStartTime", jevar.currentClockMillis());
 
                 loaded_clip.setTileMapEnum('0', "ground_tile_2");
-                loaded_clip.setTileMapEnum('1', "ground_tile_1");
+                loaded_clip.setTileMapEnum('1', "ground_1");
                 loaded_clip.setTileMapEnum('2', "brick");
                 loaded_clip.setTileMapEnum('3', "air");
 
@@ -124,7 +167,9 @@ public class GameApp4 {
                 loaded_clip.loadMapFrom2DArray(worldMap[currLevel][1]);
 
                 loaded_clip.createClipAtTile('P', "mainChar");
-                loaded_clip.createClipAtTile('B', "baddie1");
+                loaded_clip.createClipAtTile('G', "ghost_baddie");
+                loaded_clip.createClipAtTile('B', "bat_baddie");
+                loaded_clip.createClipAtTile('S', "skele_baddie");
                 loaded_clip.createClipAtTile('c', "coin_drop");
                 loaded_clip.createClipAtTile('t', "treasure");
                 loaded_clip.createClipAtTile('d', "door");
@@ -234,6 +279,7 @@ public class GameApp4 {
                         // play sound
                         if (jevar.state.getInt("health") < jevar.state.getInt("maxHealth")) {
                             JevaPrefab mainChar = (JevaPrefab) clip.state.getState("mainChar");
+                            jevar.getSound("health_collected").playOnce();
                             mainChar.state.alterInt("health", 1);
                             clip.remove();
                         } else {
@@ -265,13 +311,72 @@ public class GameApp4 {
                         wasOpened = true;
                         clip.useGraphic("chest_open");
                         // play sound
-                        // JevaPrefab mainChar = (JevaPrefab) clip.state.getState("mainChar");
-                        // mainChar.state.setInt("health",
-                        // Math.min(mainChar.state.getInt("health") + 1,
-                        // jevar.state.getInt("maxHealth")));
+                        jevar.getSound("open_chest_sfx").playOnce();
                     }
 
                     clip.state.setBoolean("wasOpened", wasOpened);
+                });
+            });
+
+            jevar.createPrefab("dynamic_sound", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+
+                // https://forums.unrealengine.com/t/how-to-get-music-to-lower-in-volume-according-to-distance-from-player-to-an-object/464744/2
+                loaded_clip.state.setDouble("ds_innerRadius", loaded_clip.props._width * 2);
+                loaded_clip.state.setDouble("ds_falloffDistance", loaded_clip.props._width * 5);
+                loaded_clip.state.setDouble("ds_maxVolume", 0.6);
+                loaded_clip.state.setBoolean("ds_playingClip", false);
+                loaded_clip.state.setBoolean("ds_isActive", true);
+                loaded_clip.addJevascript((self) -> {
+                    JevaPrefab clip = (JevaPrefab) self;
+                    JevaPrefab target = (JevaPrefab) jevar.getJevaClip(clip.state.getString("ds_targetClip"));
+                    JevaSound sound = jevar.getSound(clip.state.getString("ds_soundSource"));
+
+                    double maxVolume = clip.state.getDouble("ds_maxVolume");
+
+                    if (sound == null)
+                        return;
+                    if (!clip.state.getBoolean("ds_isActive")) {
+                        if (clip.state.getBoolean("ds_playingClip")) {
+                            clip.state.setBoolean("ds_playingClip", false);
+                            sound.setVolume(0).stop();
+                        }
+                        return;
+                    }
+
+                    if (!clip.state.getBoolean("ds_playingClip")) {
+                        clip.state.setBoolean("ds_playingClip", true);
+                        sound.playLoop();
+                    }
+
+                    if (target == null) {
+                        sound.setVolume(0);
+                    } else {
+                        double innerRadius = clip.state.getDouble("ds_innerRadius");
+                        double falloffDistance = clip.state.getDouble("ds_falloffDistance");
+
+                        double xDistance = clip.props._x - target.props._x;
+                        double yDistance = clip.props._y - target.props._y;
+
+                        double dis = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+
+                        if (dis < innerRadius) {
+                            sound.setVolume(maxVolume);
+                        } else if (dis > falloffDistance) {
+                            sound.setVolume(0);
+                        } else {
+                            double range = falloffDistance - innerRadius;
+                            dis -= innerRadius;
+                            sound.setVolume(((range - dis) / range) * maxVolume);
+                        }
+                    }
+                });
+                loaded_clip.addUnload((unload_clip) -> {
+                    JevaPrefab clip = (JevaPrefab) unload_clip;
+                    if (clip.state.getBoolean("ds_playingClip")) {
+                        JevaSound sound = jevar.getSound(clip.state.getString("ds_soundSource"));
+                        sound.setVolume(0).stop();
+                    }
                 });
             });
 
@@ -364,7 +469,7 @@ public class GameApp4 {
             jevar.createPrefab("door", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("collectible");
-                loaded_clip.useGraphic("Ruins_Tile Set");
+                loaded_clip.useGraphic("door_tile_set");
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
                     if (clip.state.getBoolean("touchingPlayer")) {
@@ -405,17 +510,17 @@ public class GameApp4 {
                 });
                 loaded_clip.addPrefab(initWidth - 210, 20, 60, 60, (cgc) -> {
                     JevaPrefab coin_graphic_clip = (JevaPrefab) cgc;
-                    
+
                     coin_graphic_clip.useSpriteSheet("coin_animation");
                 });
                 loaded_clip.addText("0", initWidth - 150, 20, 300, 60, (loaded_score) -> {
                     JevaText score_clip = (JevaText) loaded_score;
-                    
+
                     score_clip.props._backgroundColor = new Color(0, 0, 0, 0);
-                    
+
                     score_clip.addJevascript((score_clip_script) -> {
                         score_clip.props._text = "" + jevar.state.getInt("score");
-                        score_clip.props._fontColor = new Color(142,111,48);
+                        score_clip.props._fontColor = new Color(142, 111, 48);
                     });
                 });
 
@@ -743,9 +848,9 @@ public class GameApp4 {
 
                     jevar.state.setInt("health", clip.state.getInt("health"));
 
-                    clip.state.setBoolean("goingLeft", key.isDown("left"));
-                    clip.state.setBoolean("goingRight", key.isDown(JevaKey.RIGHT));
-                    clip.state.setBoolean("goingUp", key.isDown(JevaKey.UP));
+                    clip.state.setBoolean("goingLeft", (key.isDown(JevaKey.LEFT) || key.isDown(JevaKey.A)));
+                    clip.state.setBoolean("goingRight", (key.isDown(JevaKey.RIGHT) || key.isDown(JevaKey.D)));
+                    clip.state.setBoolean("goingUp", (key.isDown(JevaKey.UP) || key.isDown(JevaKey.W)));
 
                     if (key.isPressed("space")) {
                         JevaScene currScene = jevar.getCurrentScene();
@@ -789,14 +894,14 @@ public class GameApp4 {
                 });
             });
 
-            jevar.createPrefab("baddie1", (loaded_self) -> {
+            jevar.createPrefab("ground_baddie", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("collectible").extend("ragdoll");
 
                 loaded_clip.state.setInt("health", 3);
                 loaded_clip.state.setBoolean("goingLeft", true);
                 loaded_clip.state.setInt("maxXSpeed", 300);
-                loaded_clip.useGraphic("baddie_1");
+                loaded_clip.useGraphic("ghost_baddie");
 
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
 
@@ -829,14 +934,118 @@ public class GameApp4 {
                             clip.state.setBoolean("gotHurt", true);
                             projectile.remove();
                         }
+                    }
+                    // else {
+                    // clip.remove();
+                    // }
+
+                    clip.state.setBoolean("goingLeft", goingLeft);
+                    clip.state.setBoolean("goingRight", goingRight);
+                    clip.state.setBoolean("touchingLeftEdge", touchingLeftEdge);
+                    clip.state.setBoolean("touchingRightEdge", touchingRightEdge);
+                    clip.state.setBoolean("touchingLeftWall", touchingLeftWall);
+                    clip.state.setBoolean("touchingRightWall", touchingRightWall);
+                });
+            });
+
+            jevar.createPrefab("ghost_baddie", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("ground_baddie").extend("dynamic_sound");
+
+                loaded_clip.state.setString("ds_targetClip", "mainChar");
+                loaded_clip.state.setString("ds_soundSource", "ghost_baddie_howl");
+
+                loaded_clip.state.setInt("health", 3);
+                loaded_clip.state.setBoolean("goingLeft", true);
+                loaded_clip.state.setInt("maxXSpeed", 200);
+                loaded_clip.useGraphic("ghost_baddie");
+
+                JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
+
+                loaded_clip.addJevascript((self) -> {
+                    JevaPrefab clip = (JevaPrefab) self;
+
+                    if (!clip.state.getBoolean("isAlive")) {
+                        clip.state.setBoolean("goingLeft", false);
+                        clip.state.setBoolean("goingRight", false);
+                        clip.state.setBoolean("ds_isActive", false);
+                        clip.remove();
+                    }
+                });
+            });
+
+            jevar.createPrefab("skele_baddie", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("ground_baddie").extend("dynamic_sound");
+
+                loaded_clip.state.setString("ds_targetClip", "mainChar");
+                loaded_clip.state.setString("ds_soundSource", "skele_walk_sfx");
+
+                loaded_clip.state.setInt("health", 3);
+                loaded_clip.state.setBoolean("goingLeft", true);
+                loaded_clip.state.setInt("maxXSpeed", 60);
+                loaded_clip.useSpriteSheet("skele_walk_animation");
+
+                JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
+
+                loaded_clip.addJevascript((self) -> {
+                    JevaPrefab clip = (JevaPrefab) self;
+
+                    if (!clip.state.getBoolean("isAlive")) {
+                        clip.useSpriteSheet("skele_dead_animation", 1);
+                        clip.state.setBoolean("goingLeft", false);
+                        clip.state.setBoolean("goingRight", false);
+                        clip.state.setBoolean("ds_isActive", false);
+                    }
+                });
+            });
+
+            jevar.createPrefab("bat_baddie", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("collectible").extend("ragdoll");
+
+                loaded_clip.state.setInt("health", 3);
+                loaded_clip.state.setBoolean("goingLeft", true);
+                loaded_clip.state.setBoolean("usesGravity", false);
+                loaded_clip.props._width = loaded_clip.props._height * 2;
+                loaded_clip.state.setInt("maxXSpeed", 250);
+                loaded_clip.useGraphic("bat_baddie");
+
+                JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
+
+                loaded_clip.addJevascript((self) -> {
+                    JevaPrefab clip = (JevaPrefab) self;
+                    boolean isAlive = clip.state.getBoolean("isAlive");
+                    boolean goingLeft = clip.state.getBoolean("goingLeft");
+                    boolean goingRight = clip.state.getBoolean("goingRight");
+                    boolean touchingLeftWall = clip.state.getBoolean("touchingLeftWall");
+                    boolean touchingRightWall = clip.state.getBoolean("touchingRightWall");
+
+                    if (isAlive) {
+                        if (goingLeft && touchingLeftWall) {
+                            goingLeft = false;
+                            goingRight = true;
+                        }
+                        if (goingRight && touchingRightWall) {
+                            goingRight = false;
+                            goingLeft = true;
+                        }
+
+                        if (clip.state.getBoolean("touchingPlayer")) {
+                            mainChar.state.setBoolean("gotHurt", true);
+                        }
+
+                        JevaClip projectile = clip.hitTestGet("projectile");
+                        if (projectile != null) {
+                            clip.state.setBoolean("gotHurt", true);
+                            projectile.remove();
+                        }
                     } else {
                         clip.remove();
                     }
 
                     clip.state.setBoolean("goingLeft", goingLeft);
                     clip.state.setBoolean("goingRight", goingRight);
-                    clip.state.setBoolean("touchingLeftEdge", touchingLeftEdge);
-                    clip.state.setBoolean("touchingRightEdge", touchingRightEdge);
                     clip.state.setBoolean("touchingLeftWall", touchingLeftWall);
                     clip.state.setBoolean("touchingRightWall", touchingRightWall);
                 });

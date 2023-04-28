@@ -180,20 +180,50 @@ public class JevaR implements Runnable {
         jevaspritesheetLibrary.put(_label, spritesheet);
     }
 
-    public void createSound(String _label, String fileName) {
-        createSound(_label, fileName, 1);
+    public JevaSound createSound(String _label) {
+        return createSound(_label, 1);
     }
 
-    public void createSound(String _label, String fileName, int amount) {
+    public JevaSound createSound(String _label, int amount) {
+        String path = JevaSound.sourcePath;
+        String wavFileName = _label.concat(".wav");
+        String wavFileSource = path.concat(wavFileName);
+        String fileName = wavFileName;
+
+        if (JevaUtils.fileExists(wavFileSource)) {
+            return createSound(_label, fileName, amount);
+        }
+        return null;
+    }
+
+    public JevaSound createSound(String _label, String fileName) {
+       return createSound(_label, fileName, 1);
+    }
+
+    public JevaSound createSound(String _label, String fileName, int amount) {
         if (jevasoundLibrary.get(_label) != null)
-            return;
+            return null;
 
         if (fileName.isEmpty())
-            return;
+            return null;
 
         // add JevaSound to game engine
         JevaSound sound = new JevaSound(fileName, amount);
         jevasoundLibrary.put(_label, sound);
+
+        return sound;
+    }
+
+    public JevaSound getSound(String _label) {
+        JevaSound sound = jevasoundLibrary.get(_label);
+
+        if (sound == null) {
+            createSound(_label);
+
+            sound = jevasoundLibrary.get(_label);
+        }
+
+        return sound;
     }
 
     public void createScene(String _label, JevaScript onLoad) {
@@ -204,15 +234,6 @@ public class JevaR implements Runnable {
 
         // add JevaScene to game engine
         jevasceneLibrary.put(_label, jevascene);
-    }
-
-    public JevaSound getSound(String _label) {
-        JevaSound sound = jevasoundLibrary.get(_label);
-
-        if (sound == null)
-            return null;
-
-        return sound;
     }
 
     public void createJevascript(String _label, JevaScript script) {

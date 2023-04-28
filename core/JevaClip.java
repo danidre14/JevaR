@@ -24,6 +24,7 @@ public class JevaClip {
     public JevaState state;
 
     protected ArrayList<JevaScript> _onLoadScripts;
+    protected ArrayList<JevaScript> _onUnloadScripts;
     protected ArrayList<JevaScript> _scriptsList;
 
     protected JevaClip(JevaR core, String _label, double _x, double _y, double _width, double _height) {
@@ -53,6 +54,7 @@ public class JevaClip {
         state = new JevaState();
 
         _scriptsList = new ArrayList<>();
+        _onUnloadScripts = new ArrayList<>();
     }
 
     public JevaClip extend(String _label) {
@@ -85,6 +87,19 @@ public class JevaClip {
         markedForDeletion = false;
     }
 
+    public void addUnload(String _label) {
+        JevaScript script = core.jevascriptLibrary.get(_label);
+
+        if (script == null)
+            return;
+
+        addUnload(script);
+    }
+
+    public void addUnload(JevaScript _unloadScript) {
+        _onUnloadScripts.add(_unloadScript);
+    }
+
     protected void unload() {
         if (!isLoaded)
             return;
@@ -101,6 +116,12 @@ public class JevaClip {
             JevaClip jevaclip = e.getValue();
             return jevaclip.preserve == false;
         });
+
+        // call all unload methods
+        for (JevaScript script : _onUnloadScripts) {
+            script.call(this);
+        }
+        _onUnloadScripts = new ArrayList<>();
 
         isLoaded = false;
     }
@@ -183,7 +204,11 @@ public class JevaClip {
         if (!isLoaded)
             return;
 
-        // delete all jevaclips markedForDeletion from hierarchy
+        // unload and delete all jevaclips markedForDeletion from hierarchy
+        for (JevaClip jevaclip : clipsContainer.values()) {
+            if (jevaclip.shouldRemove())
+                jevaclip.unload();
+        }
         clipsContainer.entrySet().removeIf(e -> {
             JevaClip jevaclip = e.getValue();
             return jevaclip.shouldRemove();
