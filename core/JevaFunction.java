@@ -1,5 +1,5 @@
 package core;
 
 public interface JevaFunction {
-    void call(JevaState state);
+    Object call(JevaState state, Object ... args);
 }

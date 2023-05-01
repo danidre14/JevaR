@@ -79,6 +79,9 @@ public class JevaPrefab extends JevaClip {
     }
 
     public void useSpriteSheet(String _label, int numLoops) {
+        useSpriteSheet(_label, numLoops, null);
+    }   
+    public void useSpriteSheet(String _label, int numLoops, JevaFunction func) {
         if (appearanceName.equals(_label) && appearanceType == appearances.spritesheet)
             return;
         JevaSpriteSheet source = core.jevaspritesheetLibrary.get(_label);
@@ -86,7 +89,7 @@ public class JevaPrefab extends JevaClip {
         if (source == null)
             return;
 
-        source.reset(numLoops);
+        source.reset(numLoops, func);
 
         appearanceName = _label;
         appearanceType = appearances.spritesheet;
@@ -163,6 +166,7 @@ public class JevaPrefab extends JevaClip {
                     ((JevaPainting) appearanceSource).call(pCtx, px, py, w, h, state);
                 } catch (Exception e) {
                     errorPainting = true;
+                    e.printStackTrace();
                 }
             }
             if (appearanceType != appearances.painting || errorPainting) {
@@ -183,7 +187,8 @@ public class JevaPrefab extends JevaClip {
         }
 
         // rendering all added jevaclips
-        for (JevaClip jevaclip : clipsContainer.values()) {
+        LinkedHashMap<String, JevaClip> tempClipHierarchy = JevaUtils.sortClipsByDepth(clipsContainer);
+        for (JevaClip jevaclip : tempClipHierarchy.values()) {
             jevaclip.render(ctx, renderProps);
         }
 

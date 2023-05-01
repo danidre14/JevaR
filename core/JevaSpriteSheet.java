@@ -1,6 +1,8 @@
 package core;
 
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
@@ -16,16 +18,23 @@ public class JevaSpriteSheet {
     private long totalDuration; // total duration of the animation
     private int numLoops;
     private int loopCount;
+    private JevaFunction endFunc;
 
     /**
      * Creates a new, empty Animation.
      */
+    protected JevaSpriteSheet(JevaR core, String _source, int frames, int frameSize, int yStart, int fps) {
+        this(core, JevaUtils.emptyScript);
+        stripUp(_source, frames, frameSize, yStart, fps);
+    }
+
     protected JevaSpriteSheet(JevaR core, JevaScript _init) {
         this.core = core;
         frames = new ArrayList<AnimFrame>();
         totalDuration = 0;
         numLoops = 0;
         loopCount = 0;
+        endFunc = null;
         _init.call(this);
     }
 
@@ -41,19 +50,77 @@ public class JevaSpriteSheet {
 
         Image source = graphic.getSource();
 
+        addFrame(source, duration);
+    }
+
+    public synchronized void addFrame(Image source, long duration) {
+        if (source == null)
+            return;
+
         totalDuration += duration;
         frames.add(new AnimFrame(source, totalDuration));
+    }
+
+    public void stripUp(String _label, int frames, int fps) {
+        stripUp(_label, frames, 0, 0, 0, 0, fps);
+    }
+
+    public void stripUp(String _label, int frames, int frameSize, int fps) {
+        stripUp(_label, frames, frameSize, frameSize, 0, 0, fps);
+    }
+
+    public void stripUp(String _label, int frames, int frameSize, int yStart, int fps) {
+        stripUp(_label, frames, frameSize, frameSize, 0, yStart, fps);
+    }
+
+    public void stripUp(String _label, int frames, int frameSize, int xStart, int yStart, int fps) {
+        stripUp(_label, frames, frameSize, frameSize, xStart, yStart, fps);
+    }
+
+    public void stripUp(String _label, int frames, int frameWidth, int frameHeight, int xStart, int yStart, int fps) {
+        Image stripSheet = core.getImage(_label);
+        if (stripSheet == null)
+            return;
+
+        if (frames <= 0)
+            frames = 1;
+        if (frameWidth == 0)
+            frameWidth = (int) stripSheet.getWidth(null) / frames;
+        if (frameHeight == 0)
+            frameHeight = stripSheet.getHeight(null);
+
+        if (frameWidth <= 0 || frameHeight <= 0)
+            return;
+
+        int xOffset = xStart * frameWidth;
+        int yOffset = yStart * frameHeight;
+
+        int delay = 1000 / fps;
+
+        for (int i = 0; i < frames; i++) {
+
+            BufferedImage frameImage = new BufferedImage(frameWidth, frameHeight, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = (Graphics2D) frameImage.getGraphics();
+
+            g.drawImage(stripSheet,
+                    0, 0, frameWidth, frameHeight,
+                    xOffset + i * frameWidth, yOffset, xOffset + (i * frameWidth) + frameWidth, yOffset + frameHeight,
+                    null);
+
+            this.addFrame(frameImage, delay);
+        }
     }
 
     /**
      * Starts this animation over from the beginning.
      */
-    protected synchronized void reset(int numLoops) {
+    protected synchronized void reset(int numLoops, JevaFunction func) {
         animTime = 0; // reset time animation has run for to zero
         currFrameIndex = 0; // reset current frame to first frame
         startTime = core.currentClockMillis(); // reset start time to current time
         loopCount = 1;
         this.numLoops = numLoops;
+        this.endFunc = func;
     }
 
     /**
@@ -72,6 +139,9 @@ public class JevaSpriteSheet {
                 if (numLoops == 0 || loopCount < numLoops) {
                     currFrameIndex = 0; // reset current frame to first frame
                     loopCount++;
+                } else if (numLoops != 0 && loopCount >= numLoops) {
+                    if (endFunc != null)
+                        endFunc.call(core.state);
                 }
             }
 

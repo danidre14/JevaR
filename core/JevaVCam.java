@@ -3,12 +3,14 @@ package core;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.util.LinkedHashMap;
 
 public class JevaVCam {
     public int _xmouse;
     public int _ymouse;
     private String _label;
     private JevaR core;
+    private JevaScene scene;
     // projection: the piece of the world being drawn
     public JevaClipProps projection;
     // viewport: the position of the screen displaying drawing
@@ -21,13 +23,16 @@ public class JevaVCam {
 
     private BufferedImage vcamCanvas;
 
-    protected JevaVCam(JevaR core, String _label, double _pX, double _pY, double _pWidth, double _pHeight) {
-        this(core, _label, _pX, _pY, _pWidth, _pHeight, _pX, _pY, _pWidth, _pHeight);
+    protected JevaVCam(JevaR core, JevaScene scene, String _label, double _pX, double _pY, double _pWidth,
+            double _pHeight) {
+        this(core, scene, _label, _pX, _pY, _pWidth, _pHeight, _pX, _pY, _pWidth, _pHeight);
     }
 
-    protected JevaVCam(JevaR core, String _label, double _pX, double _pY, double _pWidth, double _pHeight, double _vX,
+    protected JevaVCam(JevaR core, JevaScene scene, String _label, double _pX, double _pY, double _pWidth,
+            double _pHeight, double _vX,
             double _vY, double _vWidth, double _vHeight) {
         this.core = core;
+        this.scene = scene;
         this._label = _label;
         this.projection = new JevaClipProps(_pX, _pY, _pWidth, _pHeight);
         this.viewport = new JevaClipProps(_vX, _vY, _vWidth, _vHeight);
@@ -116,20 +121,9 @@ public class JevaVCam {
 
         setProjector(vcamCtx);
 
+        LinkedHashMap<String, JevaClip> tempClipHierarchy = JevaUtils.sortClipsByDepth(JevaUtils.mergeClipContainers(scene.sceneclipHierarchy, core.jevaclipHierarchy));
         // render scene jevaclips
-        if (core.getCurrentScene() != null)
-            for (JevaClip jevaclip : core.getCurrentScene().sceneclipHierarchy.values()) {
-                if (hitTest(jevaclip)) {
-                    if (jevaclip instanceof JevaTileMap)
-                        ((JevaTileMap) jevaclip).render(vcamCtx, getProjectorBoundingRectangle());
-                    else if (jevaclip instanceof JevaText)
-                        ((JevaText) jevaclip).render(vcamCtx, parentProps);
-                    else
-                        jevaclip.render(vcamCtx, parentProps);
-                }
-            }
-        // render attached jevaclips
-        for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
+        for (JevaClip jevaclip : tempClipHierarchy.values()) {
             if (hitTest(jevaclip)) {
                 if (jevaclip instanceof JevaTileMap)
                     ((JevaTileMap) jevaclip).render(vcamCtx, getProjectorBoundingRectangle());

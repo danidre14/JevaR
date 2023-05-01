@@ -1,25 +1,47 @@
 package core;
 
 import javax.sound.sampled.AudioInputStream; // for playing sound clips
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.sound.sampled.*;
+
+import java.awt.Label;
 import java.io.*;
 import java.util.ArrayList;
 
 public class JevaSound {
     protected static String sourcePath = "sounds/";
     private MultiClip source;
+    private String _label;
+    private String fileName;
+    private int _amount;
     private static double masterVolume = 1;
     private static ArrayList<MultiClip> multiClipReferences = new ArrayList<>();
 
-    protected JevaSound(String fileName) {
-        this(fileName, 1);
+    protected JevaSound(String _label, String fileName) {
+        this(_label, fileName, 1);
     }
 
-    protected JevaSound(String fileName, int amount) {
+    protected JevaSound(String _label, String fileName, int amount) {
         String path = sourcePath;
         String filePath = path.concat(fileName);
         source = new MultiClip(filePath, amount);
+        this._label = _label;
+        this.fileName = fileName;
+        this._amount = amount;
         multiClipReferences.add(source);
+    }
+
+    protected JevaSound clone() {
+        String newLabel = _label.concat(JevaUtils.generateUUID());
+
+        JevaSound sound =  new JevaSound(newLabel, fileName, _amount);
+        sound.setVolume(getVolume());
+
+        return sound;
+    }
+
+    public String getLabel() {
+        return _label;
     }
 
     private Clip loadClip(String fileName) { // gets clip from the specified file

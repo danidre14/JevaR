@@ -10,6 +10,7 @@ public class JevaClip {
     protected JevaR core;
 
     public JevaClipProps props;
+    private int clipDepth;
 
     protected LinkedHashMap<String, JevaClip> clipsContainer;
 
@@ -20,6 +21,7 @@ public class JevaClip {
     protected String _instanceName;
 
     protected boolean isLoaded;
+    protected boolean isLoading;
 
     public JevaState state;
 
@@ -48,10 +50,13 @@ public class JevaClip {
 
         _onLoadScripts = onLoads;
         isLoaded = false;
+        isLoading = false;
         preserve = false;
         markedForDeletion = false;
 
         state = new JevaState();
+
+        setDepth(1);
 
         _scriptsList = new ArrayList<>();
         _onUnloadScripts = new ArrayList<>();
@@ -75,6 +80,9 @@ public class JevaClip {
     protected void load() {
         if (isLoaded)
             return;
+
+            isLoading = true;
+
         for (JevaScript script : _onLoadScripts) {
             script.call(this);
         }
@@ -82,6 +90,8 @@ public class JevaClip {
         for (JevaClip jevaclip : clipsContainer.values()) {
             jevaclip.load();
         }
+
+        isLoading = false;
 
         isLoaded = true;
         markedForDeletion = false;
@@ -127,6 +137,15 @@ public class JevaClip {
     }
 
     // adding jobtives
+
+    public int getDepth() {
+        return clipDepth;
+    }
+
+    public JevaClip setDepth(int value) {
+        clipDepth = value;
+        return this;
+    }
 
     public void addJevascript(String _label) {
         JevaScript script = core.jevascriptLibrary.get(_label);
@@ -355,7 +374,7 @@ public class JevaClip {
         // add JevaClip to scene's heirarchy
         clipsContainer.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -381,7 +400,7 @@ public class JevaClip {
         // add JevaClip to scene's heirarchy
         clipsContainer.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -442,7 +461,7 @@ public class JevaClip {
         // add JevaClip to scene's heirarchy
         clipsContainer.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -468,7 +487,7 @@ public class JevaClip {
         // add JevaClip to scene's heirarchy
         clipsContainer.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;

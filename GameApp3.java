@@ -134,7 +134,7 @@ public class GameApp3 {
 
             jevar.createText("textfield1", "Hello World", 0, 0, 300, 100,
                     (loaded_self) -> {
-                        ((JevaText) loaded_self).props._fontSize = 24;
+                        ((JevaText) loaded_self).props.setFontSize(24);
                         ((JevaText) loaded_self).props._x = initWidth / 2;
                         ((JevaText) loaded_self).props._y = 40;
                         ((JevaText) loaded_self).props.setAnchorX(0.5);

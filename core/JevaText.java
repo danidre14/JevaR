@@ -40,31 +40,6 @@ public class JevaText extends JevaClip {
         return this;
     }
 
-    // public String getFontFamily() {
-    // return _fontFamily;
-    // }
-
-    // public Color getFontColor() {
-    // return _fontColor;
-    // }
-
-    // public double getFontSize() {
-    // return _fontSize;
-    // }
-
-    // public void setFontFamily(String _fontFamily) {
-    // this._fontFamily = _fontFamily;
-    // }
-
-    // public void setFontColor(Color color) {
-    // this._fontColor = color;
-    // }
-
-    // public void setFontSize(int size) {
-    // if (size < 8)
-    // size = 8;
-    // this._fontSize = size;
-    // }
 
     @Override
     protected Rectangle2D.Double getBoundingRectangle() {
@@ -150,14 +125,15 @@ public class JevaText extends JevaClip {
                 else if (props.getAlign().equals("center"))
                     alignOffset = (w - lineWidth) / 2;
             }
-            pCtx.drawString(line, px + (int) alignOffset, py += props._fontSize);
+            pCtx.drawString(line, px + (int) alignOffset, py += props._lineHeight);
         }
 
         ctx.drawImage(painting, x - offsetX, y - offsetY, null);
         pCtx.dispose();
 
         // rendering all added jevaclips
-        for (JevaClip jevaclip : clipsContainer.values()) {
+        LinkedHashMap<String, JevaClip> tempClipHierarchy = JevaUtils.sortClipsByDepth(clipsContainer);
+        for (JevaClip jevaclip : tempClipHierarchy.values()) {
             jevaclip.render(ctx, renderProps);
         }
 

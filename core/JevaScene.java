@@ -2,12 +2,14 @@ package core;
 
 import java.awt.Graphics2D;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class JevaScene {
     private String _label;
     protected JevaR core;
 
     private boolean isLoaded;
+    private boolean isLoading;
 
     public JevaState state;
 
@@ -37,6 +39,7 @@ public class JevaScene {
 
         _onLoadScripts = onLoads;
         isLoaded = false;
+        isLoading = false;
 
         _scriptsList = new ArrayList<>();
         _onUnloadScripts = new ArrayList<>();
@@ -45,6 +48,9 @@ public class JevaScene {
     protected void load() {
         if (isLoaded)
             return;
+
+        isLoading = true;
+
         for (JevaScript script : _onLoadScripts) {
             script.call(this);
         }
@@ -52,6 +58,8 @@ public class JevaScene {
         for (JevaClip jevaclip : sceneclipHierarchy.values()) {
             jevaclip.load();
         }
+
+        isLoading = false;
 
         isLoaded = true;
     }
@@ -85,13 +93,13 @@ public class JevaScene {
             JevaClip jevaclip = e.getValue();
             return jevaclip.preserve == false;
         });
-        
+
         // call all unload methods
         for (JevaScript script : _onUnloadScripts) {
             script.call(this);
         }
         _onUnloadScripts = new ArrayList<>();
-        
+
         isLoaded = false;
     }
 
@@ -125,6 +133,10 @@ public class JevaScene {
     }
 
     public JevaClip addPrefab(String _label, double _x, double _y) {
+        return this.addPrefab(_label, _x, _y, JevaUtils.emptyScript);
+    }
+
+    public JevaClip addPrefab(String _label, double _x, double _y, JevaScript onLoad) {
         JevaClip oldJevaclip = core.jevaclipLibrary.get(_label);
 
         if (oldJevaclip == null)
@@ -133,7 +145,7 @@ public class JevaScene {
         double _width = oldJevaclip.props._width;
         double _height = oldJevaclip.props._height;
 
-        return this.addPrefab(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList()));
+        return this.addPrefab(_label, _x, _y, _width, _height, new ArrayList<>(Arrays.asList(onLoad)));
     }
 
     public JevaClip addPrefab(String _label, double _x, double _y, double _width, double _height) {
@@ -163,7 +175,7 @@ public class JevaScene {
         // add JevaClip to scene's heirarchy
         sceneclipHierarchy.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -189,7 +201,7 @@ public class JevaScene {
         // add JevaClip to scene's heirarchy
         sceneclipHierarchy.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -254,7 +266,7 @@ public class JevaScene {
         // add JevaClip to scene's heirarchy
         sceneclipHierarchy.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -280,7 +292,7 @@ public class JevaScene {
         // add JevaClip to scene's heirarchy
         sceneclipHierarchy.put(id, jevaclip);
 
-        if (isLoaded)
+        if (isLoaded || isLoading)
             jevaclip.load();
 
         return jevaclip;
@@ -368,7 +380,7 @@ public class JevaScene {
         if (vcam != null)
             return vcam;
 
-        vcam = new JevaVCam(core, _label, _pX, _pY, _pWidth, _pHeight, _vX, _vY, _vWidth, _vHeight);
+        vcam = new JevaVCam(core, this, _label, _pX, _pY, _pWidth, _pHeight, _vX, _vY, _vWidth, _vHeight);
 
         scenevcamHierarchy.put(_label, vcam);
 
@@ -454,19 +466,10 @@ public class JevaScene {
 
     protected void render(Graphics2D ctx) {
         if (scenevcamHierarchy.size() == 0) {
+            LinkedHashMap<String, JevaClip> tempClipHierarchy = JevaUtils
+                    .sortClipsByDepth(JevaUtils.mergeClipContainers(sceneclipHierarchy, core.jevaclipHierarchy));
             // rendering all added jevaclips
-            for (JevaClip jevaclip : sceneclipHierarchy.values()) {
-                if (core.screen.hitTest(jevaclip)) {
-                    if (jevaclip instanceof JevaTileMap)
-                        ((JevaTileMap) jevaclip).render(ctx, core.screen.getBoundingRectangle());
-                    else if (jevaclip instanceof JevaText)
-                        ((JevaText) jevaclip).render(ctx, sceneProps);
-                    else
-                        jevaclip.render(ctx, sceneProps);
-                }
-            }
-            // rendering added jevaclips
-            for (JevaClip jevaclip : core.jevaclipHierarchy.values()) {
+            for (JevaClip jevaclip : tempClipHierarchy.values()) {
                 if (core.screen.hitTest(jevaclip)) {
                     if (jevaclip instanceof JevaTileMap)
                         ((JevaTileMap) jevaclip).render(ctx, core.screen.getBoundingRectangle());

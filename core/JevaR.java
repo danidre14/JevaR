@@ -125,16 +125,10 @@ public class JevaR implements Runnable {
     }
 
     public Image getImage(String _label) {
-        JevaGraphic graphic = jevagraphicLibrary.get(_label);
+        JevaGraphic graphic = getJevaGraphic(_label);
 
-        if (graphic == null) {
-            createGraphic(_label);
-
-            graphic = jevagraphicLibrary.get(_label);
-
-            if (graphic == null)
-                return null;
-        }
+        if (graphic == null)
+            return null;
 
         Image source = graphic.getSource();
         return source;
@@ -180,6 +174,33 @@ public class JevaR implements Runnable {
         jevaspritesheetLibrary.put(_label, spritesheet);
     }
 
+    public void createSpriteSheet(String _label, String _source, int frames, int frameSize, int yStart, int fps) {
+        if (jevaspritesheetLibrary.get(_label) != null)
+            return;
+
+        // add JevaSpriteSheet to game engine
+        JevaSpriteSheet spritesheet = new JevaSpriteSheet(this, _source, frames, frameSize, yStart, fps);
+        jevaspritesheetLibrary.put(_label, spritesheet);
+    }
+
+    public String copySound(String _label) {
+
+        JevaSound sound = jevasoundLibrary.get(_label);
+
+        if (sound == null) {
+            createSound(_label);
+            sound = jevasoundLibrary.get(_label);
+            if (sound == null)
+                return null;
+        }
+
+        sound = sound.clone();
+        _label = sound.getLabel();
+        jevasoundLibrary.put(_label, sound);
+
+        return _label;
+    }
+
     public JevaSound createSound(String _label) {
         return createSound(_label, 1);
     }
@@ -197,7 +218,7 @@ public class JevaR implements Runnable {
     }
 
     public JevaSound createSound(String _label, String fileName) {
-       return createSound(_label, fileName, 1);
+        return createSound(_label, fileName, 1);
     }
 
     public JevaSound createSound(String _label, String fileName, int amount) {
@@ -208,7 +229,7 @@ public class JevaR implements Runnable {
             return null;
 
         // add JevaSound to game engine
-        JevaSound sound = new JevaSound(fileName, amount);
+        JevaSound sound = new JevaSound(_label, fileName, amount);
         jevasoundLibrary.put(_label, sound);
 
         return sound;
@@ -252,20 +273,79 @@ public class JevaR implements Runnable {
         jevafunctionLibrary.put(_label, func);
     }
 
-    public void execFunc(String _label) {
+    public Object execFunc(String _label, Object ...args) {
+        return setTimeout(_label, 0, args);
+    }
+
+    public Object execFunc(JevaFunction func, Object ...args) {
+        return setTimeout(func, 0, args);
+    }
+
+    private static class JevaBatch {
+        private JevaR core;
+        private JevaFunction func;
+        private long deadline;
+        private boolean executed;
+        private Object[] args;
+
+        private static ArrayList<JevaBatch> batches = new ArrayList<>();
+
+        private static void queueBatch(JevaR core, JevaFunction func, int ms, Object ...args) {
+            JevaBatch batch = new JevaBatch(core, func, ms, args);
+
+            batches.add(batch);
+        }
+
+        private static void resolveBatches() {
+            Iterator<JevaBatch> itr = batches.iterator();
+            while (itr.hasNext()) {
+                JevaBatch batch = itr.next();
+                batch.execute();
+                if (batch.executed) {
+                    itr.remove();
+                }
+            }
+
+            // Read more:
+            // https://www.java67.com/2018/12/how-to-remove-objects-or-elements-while-iterating-Arraylist-java.html#ixzz80P2jnWqS
+        }
+
+        private JevaBatch(JevaR core, JevaFunction func, int ms, Object ...args) {
+            this.core = core;
+            this.func = func;
+            this.deadline = core.currentClockMillis() + ms;
+            this.executed = false;
+            this.args = args;
+        }
+
+        private void execute() {
+            long timeNow = core.currentClockMillis();
+            if (deadline < timeNow && !executed) {
+                executed = true;
+                if (func != null)
+                    func.call(core.state, this.args);
+            }
+        }
+    }
+
+    public Object setTimeout(String _label, int ms, Object ...args) {
         JevaFunction func = jevafunctionLibrary.get(_label);
 
         if (func == null)
-            return;
+            return null;
 
-        execFunction(func);
+        return setTimeout(func, ms, args);
     }
 
-    public void execFunction(JevaFunction func) {
+    public Object setTimeout(JevaFunction func, int ms, Object ...args) {
         if (func == null)
-            return;
+            return null;
 
-        func.call(state);
+        if (ms <= 0)
+            return func.call(state, args);
+        else
+            JevaBatch.queueBatch(this, func, ms, args);
+        return null;
     }
 
     public void createPrefab(String _label, double _x, double _y, double _width, double _height) {
@@ -808,6 +888,9 @@ public class JevaR implements Runnable {
         checkHoverEngine();
         key.clearKeyStates(false);
         mouse.clearMouseStates(false);
+
+        JevaBatch.resolveBatches();
+
         cleanUpEngine();
     }
 

@@ -174,16 +174,26 @@ public class JevaTileMap extends JevaClip {
         props._height = _mapHeight * this._tileHeight;
     }
 
-    public void createClipAtTile(char k, String _label) {
+    public ArrayList<JevaClip> createClipAtTile(char k, String _label) {
+        return createClipAtTile(k, _label, 1);
+    }
+
+    public ArrayList<JevaClip> createClipAtTile(char k, String _label, int clipDepth) {
+        return createClipAtTile(k, _label, clipDepth, JevaUtils.emptyScript);
+    }
+
+    public ArrayList<JevaClip> createClipAtTile(char k, String _label, int clipDepth, JevaScript onLoad) {
+        ArrayList<JevaClip> createdClips = new ArrayList<>();
+
         JevaScene scene = core.getCurrentScene();
 
         if (scene == null)
-            return;
+            return createdClips;
 
         JevaClip desiredClip = core.jevaclipLibrary.get(_label);
 
         if (desiredClip == null)
-            return;
+            return createdClips;
 
         for (int y = 0; y < _mapHeight; y++) {
             for (int x = 0; x < _mapWidth; x++) {
@@ -192,9 +202,20 @@ public class JevaTileMap extends JevaClip {
                 _tileMap[x][y].tileType = _label;
                 int _x = JevaUtils.roundInt(props._x + tilesToPixelsX(x));
                 int _y = JevaUtils.roundInt(props._y + tilesToPixelsY(y));
-                scene.addPrefab(_label, _x, _y);
+                JevaClip addedClip = scene.addPrefab(_label, _x, _y, onLoad).setDepth(clipDepth);
+                if (isLoaded || isLoading) {
+                    addedClip.load();
+                }
+                createdClips.add(addedClip);
             }
         }
+
+        return createdClips;
+    }
+
+    public void setTileEnum(char k, String _name, String _type) {
+        setTileMapEnum(k, _name);
+        setTileTypeEnum(k, _type);
     }
 
     public void setTileMapEnum(char k, String _label) {
@@ -309,7 +330,7 @@ public class JevaTileMap extends JevaClip {
         if (source == null)
             return;
 
-        source.reset();
+        source.reset(0, null);
 
         _tileMap[x][y].appearanceName = _label;
         _tileMap[x][y].appearanceType = appearances.spritesheet;
@@ -410,7 +431,6 @@ public class JevaTileMap extends JevaClip {
         tileTop = JevaUtils.clampInt(pixelsToTilesX(screenTop - props._y), 0, _mapHeight);
         tileBottom = JevaUtils.clampInt(pixelsToTilesX(screenTop - props._y + screenHeight) + 1, 0, _mapHeight);
 
-
         Composite old = ctx.getComposite();
         ctx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, props._alpha));
 
@@ -477,6 +497,10 @@ public class JevaTileMap extends JevaClip {
     }
 
     public boolean hitTest(double x, double y, String type) {
+        return hitTest(x, y, new String[] { type });
+    }
+
+    public boolean hitTest(double x, double y, String[] type) {
         if (shouldRemove() || !props._visible)
             return false;
 
@@ -489,6 +513,11 @@ public class JevaTileMap extends JevaClip {
                 yTile < 0 || yTile >= _mapHeight)
             return false;
         String tileType = getTileType(xTile, yTile);
-        return tileType != null && tileType.equals(type);
+        if (tileType == null)
+            return false;
+        for (int i = 0; i < type.length; i++)
+            if (tileType.equals(type[i]))
+                return true;
+        return false;
     }
 }
