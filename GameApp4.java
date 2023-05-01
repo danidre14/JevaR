@@ -91,7 +91,7 @@ public class GameApp4 {
             jevar.getSound("background_music").playLoop();
 
             String[][][] worldMap = {
-                    { { "300" }, {
+                    { { "60" }, {
                             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                             "b    l                        b",
                             "b    l                        d",
@@ -106,11 +106,11 @@ public class GameApp4 {
                             "bbbb          lS      bbbbb   b",
                             "b            ggggg          c b",
                             "b     b    2geeeeegc       bbbb",
-                            "b   1 b    geeeeeeegg         b",
+                            "b P 1 b    geeeeeeegg         b",
                             "bggggggg/ggeeeeeeeeeeggg  5 c b",
                             "beeeeeee|eeeeeeeeeeeeeeeggggggb",
                             "be      l              eeeeeeeb",
-                            "be P    l                    eb",
+                            "be      l                    eb",
                             "beeeeee l     t              eb",
                             "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeb",
                             "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeb",
@@ -523,35 +523,37 @@ public class GameApp4 {
 
                 JevaTileMap map = (JevaTileMap) jevar.getJevaClip("worldMap");
 
-                System.out.println("flood was loaded");
-
                 loaded_clip.setInstanceName("flood");
                 loaded_clip.props._width = map.props._width;
                 loaded_clip.props._x = map.props._x;
                 loaded_clip.props._y = map.props._y + map.props._height - tileSize;
 
+                // https://gamedev.stackexchange.com/questions/44547/how-do-i-create-2d-water-with-dynamic-waves
+
                 // Resolution of simulation
-                int NUM_POINTS = map._tileWidth * 2;
+                int NUM_POINTS = map._tileWidth;
                 // Width of simulation
                 double WIDTH = loaded_clip.props._width + tileSize * 2;
                 // Spring constant for forces applied by adjacent points
-                double SPRING_CONSTANT = 0.005;
+                double SPRING_CONSTANT = 0.01;
                 // Sprint constant for force applied to baseline
-                double SPRING_CONSTANT_BASELINE = 0.005;
+                double SPRING_CONSTANT_BASELINE = 0.01;
                 // Vertical draw offset of simulation
                 final double Y_OFFSET = 60;
                 // Damping to apply to speed changes
-                double DAMPING = 0.98;
+                double DAMPING = 0.9858;
                 // Number of iterations of point-influences-point to do on wave per step
                 // (this makes the waves animate faster)
-                int ITERATIONS = 2;
+                int ITERATIONS = 3;
+
+                double POINTS_OFFSET = (1.0 / NUM_POINTS) * WIDTH;
 
                 jevar.createFunc("makeWavePoints", (state, arg) -> {
                     int numPoints = (int) arg[0];
                     ArrayList<WavePoint> wavePoints = new ArrayList<>();
                     for (int n = 0; n < numPoints; n++) {
                         // This represents a point on the wave
-                        WavePoint newPoint = new WavePoint(-10 + n * 1.0 / numPoints * WIDTH, Y_OFFSET, 0, 1);
+                        WavePoint newPoint = new WavePoint(-10 + n * POINTS_OFFSET, Y_OFFSET, 0, 1);
                         wavePoints.add(newPoint);
                     }
                     return wavePoints;
@@ -594,7 +596,7 @@ public class GameApp4 {
 
                 int NUM_BACKGROUND_WAVES = 3;
                 double BACKGROUND_WAVE_MAX_HEIGHT = 6;
-                double BACKGROUND_WAVE_COMPRESSION = 1.0 / 20;
+                double BACKGROUND_WAVE_COMPRESSION = 1.0 / 12;
                 // Amounts by which a particular sine is offset
                 ArrayList<Double> sineOffsets = new ArrayList<>();
                 // Amounts by which a particular sine is amplified
@@ -700,17 +702,21 @@ public class GameApp4 {
                     ArrayList<WavePoint> newWavePoints = (ArrayList<GameApp4.WavePoint>) jevar
                             .execFunc("updateWavePoints", wavePoints, jevar.getDelta());
                     loaded_clip.state.setState("wavePoints", newWavePoints);
-
-                    if (jevar.mouse.isReleased(JevaMouse.LEFT)) {
-
-                        // jevar.execFunc("splashWave");
-                    }
                 });
 
-                // https://gamedev.stackexchange.com/questions/44547/how-do-i-create-2d-water-with-dynamic-waves
-
                 loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
-                    ctx.setColor(Color.GREEN);
+
+                    JevaVCam vcam = jevar.getVCam("mainCamera");
+
+                    if (vcam == null)
+                        return;
+                    double camWidth = vcam.projection._width;
+                    double camBaseX = vcam.projection._x - camWidth / 2;
+                    double clipWidth = loaded_clip.props._width;
+                    double clipBaseX = loaded_clip.props._x - clipWidth / 2;
+
+                    int offsetXLeft =  (int) (((camBaseX - clipBaseX) * 1.0) / POINTS_OFFSET);
+                    int offsetXRight = offsetXLeft + 3 + (int) ((camWidth) * 1.0 / POINTS_OFFSET);
 
                     Polygon polyGon = new Polygon();
                     polyGon.addPoint((int) (_x + _width + 10), (int) (_y + _height + 10));
@@ -720,9 +726,11 @@ public class GameApp4 {
                     ArrayList<WavePoint> wavePoints = (ArrayList<GameApp4.WavePoint>) state.getState("wavePoints");
 
                     int activeOffset = state.getInt("offset", 0);
+                    int drawXLeft = Math.max(offsetXLeft, 0);
+                    int drawXRight = Math.min(offsetXRight, wavePoints.size());
 
                     // Draw points and line
-                    for (var n = 0; n < wavePoints.size(); n++) {
+                    for (var n = drawXLeft; n < drawXRight; n++) {
                         var p = wavePoints.get(n);
                         double overlapSinesPX = (double) jevar.execFunc("overlapSines", p.x, activeOffset);
 
@@ -744,7 +752,6 @@ public class GameApp4 {
                 loaded_clip.props.shiftAnchorX(0.5);
                 loaded_clip.props.shiftAnchorY(1);
 
-                // loaded_clip.props.setAlpha(0.6);
                 final JevaSound ambienceSound = jevar.getSound("underwater_ambience");
 
                 ambienceSound.playLoop();
@@ -763,12 +770,8 @@ public class GameApp4 {
 
                     double mapHeight = map.props._height;
 
-                    // clip.props._height = Math.min(((jevar.currentClockMillis() - levelStartTime)
-                    // * 1.0 / levelMaxTime),
-                    // 1)
-                    // * mapHeight;
-
-                    clip.props._height = 800;
+                    clip.props._height = Math.min(((jevar.currentClockMillis() - levelStartTime)
+                            * 1.0 / levelMaxTime), 1) * mapHeight;
 
                     JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
 
@@ -876,13 +879,13 @@ public class GameApp4 {
 
                 loaded_clip.useGraphic("air");
                 loaded_clip.props._visible = false;
-                JevaText infoText = (JevaText) loaded_clip.addText("Information Text here", initWidth / 2, initHeight,
+                JevaText infoText = (JevaText) loaded_clip.addText("Information Text here", initWidth / 2, 0,
                         initWidth, 60);
                 infoText.props.setAlign("c");
                 infoText.props.setFontSize(40);
                 infoText.props.setAnchorX(0.5);
-                infoText.props.setAnchorY(1);
-                infoText.props._backgroundColor = new Color(22, 22, 50, 50);
+                infoText.props.setAnchorY(0);
+                infoText.props._backgroundColor = new Color(50, 22, 22, 50);
 
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
@@ -911,70 +914,66 @@ public class GameApp4 {
                 JevaVCam vcam = jevar.getVCam("mainCamera");
 
                 loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
-                    ctx.setColor(JevaUtils.color("A5EDFF"));
-                    ctx.fillRect(0, 0, 400, 100);
-                    ctx.fillRect((int) _width - 450, 0, 450, 100);
-
-                    ctx.setColor(JevaUtils.color("9666FF"));
-                    ctx.setStroke(new BasicStroke(5));
-                    ctx.drawRect(0, 0, 400, 100);
-                    ctx.drawRect((int) _width - 450, 0, 450, 100);
-
+                    ctx.setColor(new Color(0, 0, 0, 120));
+                    ctx.fillRect(0, initHeight - 50, 560, 50);
+                    ctx.fillRect(initWidth - 560, initHeight - 50, 560, 50);
                 });
 
-                loaded_clip.addText("Floor: 1", initWidth - 420, 20, 300, 60, (loaded_score) -> {
+                loaded_clip.addText("Health: ", 10, initHeight - 50, 150, 50);
+
+                loaded_clip.addText("Level: 0", initWidth - 550, initHeight - 50, 200, 50, (loaded_score) -> {
                     JevaText score_clip = (JevaText) loaded_score;
 
-                    score_clip.props._backgroundColor = new Color(0, 0, 0, 0);
-
                     score_clip.addJevascript((score_clip_script) -> {
-                        score_clip.props._text = "Floor: " + (jevar.state.getInt("currLevel") + 1);
-                        score_clip.props._fontColor = new Color(20, 20, 20);
+                        score_clip.props._text = "Level: " + (jevar.state.getInt("currLevel") + 1);
                     });
                 });
-                loaded_clip.addPrefab(initWidth - 210, 20, 60, 60, (cgc) -> {
+                loaded_clip.addPrefab(initWidth - 350, initHeight - 50, 60, 60, (cgc) -> {
                     JevaPrefab coin_graphic_clip = (JevaPrefab) cgc;
 
                     coin_graphic_clip.useSpriteSheet("coin_animation");
                 });
-                loaded_clip.addText("0", initWidth - 150, 20, 300, 60, (loaded_score) -> {
+                loaded_clip.addText("0", initWidth - 290, initHeight - 50, 300, 50, (loaded_score) -> {
                     JevaText score_clip = (JevaText) loaded_score;
-
-                    score_clip.props._backgroundColor = new Color(0, 0, 0, 0);
 
                     score_clip.addJevascript((score_clip_script) -> {
                         score_clip.props._text = "" + jevar.state.getInt("score");
-                        score_clip.props._fontColor = new Color(142, 111, 48);
                     });
                 });
 
-                loaded_clip.addPrefab(5, 15, 400, 30, (l) -> {
+                loaded_clip.addPrefab(150, initHeight - 50, 400, 50, (l) -> {
                     JevaPrefab health_clip = (JevaPrefab) l;
 
                     Image heartFullImg = jevar.getImage("life_full");
                     Image heartEmptyImg = jevar.getImage("life_empty");
                     int heartDistance = 10;
+                    int heartSize = (int) (health_clip.props._height * 0.6);
+                    int xOffset = 0;
 
                     health_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
                         int health = jevar.state.getInt("health");
                         int maxHealth = jevar.state.getInt("maxHealth");
-                        int heartSize = (int) _height;
                         for (int i = 0; i < health; i++) {
-                            ctx.drawImage(heartFullImg, (int) _x + ((heartSize + heartDistance) * i), (int) _y,
-                                    (int) heartSize, (int) (heartSize * 0.8), null);
+                            ctx.drawImage(heartFullImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
+                                    heartDistance + (int) _y,
+                                    (int) heartSize, (int) (heartSize), null);
                         }
                         for (int i = health; i < maxHealth; i++) {
-                            ctx.drawImage(heartEmptyImg, (int) _x + ((heartSize + heartDistance) * i), (int) _y,
-                                    (int) heartSize, (int) (heartSize * 0.8), null);
+                            ctx.drawImage(heartEmptyImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
+                                    heartDistance + (int) _y,
+                                    (int) heartSize, (int) (heartSize), null);
                         }
                     });
                 });
-                loaded_clip.addPrefab(5, 45, 400, 30, (l) -> {
+                loaded_clip.addPrefab(150, initHeight - 100, 410, 50, (l) -> {
                     JevaPrefab breath_clip = (JevaPrefab) l;
+
+                    breath_clip.props.shiftAnchorX(0.5);
 
                     Image breathFullImg = jevar.getImage("bubble_full");
                     Image breathEmptyImg = jevar.getImage("bubble_empty");
-                    int breathDistance = 10;
+                    int bubbleSize = (int) (breath_clip.props._height * 0.6);
+                    int bubbleDistance = 10;
 
                     breath_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
                         JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
@@ -984,14 +983,25 @@ public class GameApp4 {
 
                         int breath = mainChar.state.getInt("breath");
                         int maxBreath = mainChar.state.getInt("maxBreath");
-                        int bubbleSize = (int) _height;
+
+                        if (breath == maxBreath)
+                            return;
+
+                        ctx.setColor(new Color(0, 0, 0, 120));
+                        ctx.fillRect((int) _x, (int) _y, (int) _width, (int) _height);
+
+                        int bubblesWidth = (bubbleSize * maxBreath) + (bubbleDistance * (maxBreath - 1));
+                        int bubblesOffset = (int) (_width / 2) - (bubblesWidth / 2);
                         for (int i = 0; i < breath; i++) {
-                            ctx.drawImage(breathFullImg, (int) _x + ((bubbleSize + breathDistance) * i), (int) _y,
-                                    (int) bubbleSize, (int) (bubbleSize * 0.8), null);
+                            ctx.drawImage(breathFullImg, bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
+                                    bubbleDistance + (int) _y,
+                                    (int) bubbleSize, (int) (bubbleSize), null);
                         }
                         for (int i = breath; i < maxBreath; i++) {
-                            ctx.drawImage(breathEmptyImg, (int) _x + ((bubbleSize + breathDistance) * i), (int) _y,
-                                    (int) bubbleSize, (int) (bubbleSize * 0.8), null);
+                            ctx.drawImage(breathEmptyImg,
+                                    bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
+                                    bubbleDistance + (int) _y,
+                                    (int) bubbleSize, (int) (bubbleSize), null);
                         }
                     });
                 });
@@ -1294,7 +1304,6 @@ public class GameApp4 {
                     } else {
                         touchingFloor = touchingCeiling = touchingLeftWall = touchingRightWall = false;
                     }
-                    
 
                     if (!isAlive) {
                         climbingLadder = false;
@@ -1517,23 +1526,23 @@ public class GameApp4 {
                             vcam.projection._x = map.props._x + map.props._width / 2;
                         } else {
                             vcam.projection._x = clip.props._x;
-                            // if (vcam.projection._x < map.props._x + vcam.projection._width / 2)
-                            // vcam.projection._x = map.props._x + vcam.projection._width / 2;
-                            // else if (vcam.projection._x > map.props._x + map.props._width -
-                            // vcam.projection._width / 2)
-                            // vcam.projection._x = map.props._x + map.props._width - vcam.projection._width
-                            // / 2;
+                            if (vcam.projection._x < map.props._x + vcam.projection._width / 2)
+                                vcam.projection._x = map.props._x + vcam.projection._width / 2;
+                            else if (vcam.projection._x > map.props._x + map.props._width -
+                                    vcam.projection._width / 2)
+                                vcam.projection._x = map.props._x + map.props._width - vcam.projection._width
+                                        / 2;
                         }
                         if (map.props._height < vcam.projection._height) {
                             vcam.projection._y = map.props._y + map.props._height / 2;
                         } else {
                             vcam.projection._y = clip.props._y;
-                            // if (vcam.projection._y < map.props._y + vcam.projection._height / 2)
-                            // vcam.projection._y = map.props._y + vcam.projection._height / 2;
-                            // else if (vcam.projection._y > map.props._y + map.props._height
-                            // - vcam.projection._height / 2)
-                            // vcam.projection._y = map.props._y + map.props._height -
-                            // vcam.projection._height / 2;
+                            if (vcam.projection._y < map.props._y + vcam.projection._height / 2)
+                                vcam.projection._y = map.props._y + vcam.projection._height / 2;
+                            else if (vcam.projection._y > map.props._y + map.props._height
+                                    - vcam.projection._height / 2)
+                                vcam.projection._y = map.props._y + map.props._height -
+                                        vcam.projection._height / 2;
                         }
                     }
 

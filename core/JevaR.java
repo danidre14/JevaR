@@ -266,8 +266,8 @@ public class JevaR implements Runnable {
     }
 
     public void createFunc(String _label, JevaFunction func) {
-        if (jevafunctionLibrary.get(_label) != null)
-            return;
+        // if (jevafunctionLibrary.get(_label) != null)
+        //     return;
 
         // add JevaFunction to game engine
         jevafunctionLibrary.put(_label, func);
