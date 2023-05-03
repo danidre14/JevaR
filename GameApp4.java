@@ -82,7 +82,7 @@ public class GameApp4 {
             jevar.createSound("chest_near_sfx");
             jevar.createSound("button_hover_sfx", 4);
             jevar.createSound("button_press_sfx", 2);
-            jevar.createSound("ghost_baddie_howl");
+            jevar.createSound("snake_baddie_hiss_sfx").setVolume(2);
             jevar.createSound("bat_baddie_screech").setVolume(0.5);
             jevar.createSound("health_collected", 5).setVolume(0.7);
             jevar.createSound("background_music").setVolume(0.5);
@@ -149,7 +149,13 @@ public class GameApp4 {
             });
 
             int charAnimationSize = 41;
+            int snakeAnimationSize = 32;
+            int batAnimationSize = 32;
             String playerSpriteSheet = "player_spritesheet";
+            
+            jevar.createSpriteSheet("snake_baddie_animation", "snake_baddie_spritesheet", 4, snakeAnimationSize, 0, 8);
+            jevar.createSpriteSheet("bat_baddie_fly_animation", "bat_baddie_spritesheet", 4, batAnimationSize, 0, 8);
+            jevar.createSpriteSheet("bat_baddie_die_animation", "bat_baddie_spritesheet", 4, batAnimationSize, 1, 8);
 
             jevar.createSpriteSheet("char_idle_animation", playerSpriteSheet, 4, charAnimationSize, 0, 6);
             jevar.createSpriteSheet("char_jump_animation", playerSpriteSheet, 2, charAnimationSize, 1, 10);
@@ -229,7 +235,7 @@ public class GameApp4 {
                 loaded_clip.loadMapFrom2DArray(worldMap[currLevel][1]);
 
                 loaded_clip.createClipAtTile('P', "mainChar", playerDepth);
-                loaded_clip.createClipAtTile('G', "ghost_baddie", baddieDepth);
+                loaded_clip.createClipAtTile('G', "snake_baddie", baddieDepth);
                 loaded_clip.createClipAtTile('B', "bat_baddie", baddieDepth);
                 loaded_clip.createClipAtTile('S', "skele_baddie", baddieDepth);
                 loaded_clip.createClipAtTile('c', "coin_drop", collectibleDepth);
@@ -685,8 +691,6 @@ public class GameApp4 {
 
                             // Apply acceleration (with damping)
                             p.spdy = DAMPING * p.spdy + acceleration;
-
-                            // System.out.println("speedy = " + p.spdy);
 
                             // Apply speed
                             p.y = p.y + p.spdy;
@@ -1688,17 +1692,17 @@ public class GameApp4 {
                 });
             });
 
-            jevar.createPrefab("ghost_baddie", (loaded_self) -> {
+            jevar.createPrefab("snake_baddie", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("ground_baddie").extend("dynamic_sound");
 
                 loaded_clip.state.setString("ds_targetClip", "mainChar");
-                loaded_clip.state.setString("ds_soundSource", jevar.copySound("ghost_baddie_howl"));
+                loaded_clip.state.setString("ds_soundSource", jevar.copySound("bat_baddie_screech"));
 
                 loaded_clip.state.setInt("health", 3);
                 loaded_clip.state.setBoolean("goingLeft", true);
                 loaded_clip.state.setInt("maxXSpeed", 200);
-                loaded_clip.useGraphic("ghost_baddie");
+                loaded_clip.useSpriteSheet("snake_baddie_animation");
 
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
 
@@ -1753,9 +1757,8 @@ public class GameApp4 {
                 loaded_clip.state.setInt("health", 3);
                 loaded_clip.state.setBoolean("goingLeft", true);
                 loaded_clip.state.setBoolean("usesGravity", false);
-                loaded_clip.props._width = loaded_clip.props._height * 2;
                 loaded_clip.state.setInt("maxXSpeed", 250);
-                loaded_clip.useGraphic("bat_baddie");
+                loaded_clip.useSpriteSheet("bat_baddie_fly_animation");
 
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
 
