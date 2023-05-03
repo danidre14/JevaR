@@ -13,8 +13,15 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
     private Canvas gameCanvas;
     private Container gameContainer;
 
+    private static final int NUM_BUFFERS = 2;
+
+    private GraphicsDevice device;
+    private boolean isFullScreen;
+
     protected int _width;
     protected int _height;
+    protected int _initwidth;
+    protected int _initheight;
 
     private BufferStrategy offscreenCanvas;
 
@@ -24,20 +31,23 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         this.core = core;
         this._width = _width;
         this._height = _height;
+        this._initwidth = _width;
+        this._initheight = _height;
         setTitle("A JevaR Application");
         setSize(_width, _height + 10);
 
         backgroundColor = new Color(0, 128, 0);
         backgroundColor = Color.WHITE;
 
+        isFullScreen = false;
+
         // create game panel
 
         gameCanvas = new Canvas();
-        // gamePanel = new JPanel(new FlowLayout());
-        gameCanvas.setPreferredSize(new Dimension(_width, _height));
-        gameCanvas.setMinimumSize(new Dimension(_width, _height));
-        gameCanvas.setBounds(0, 0, _width, _height);
-        // gamePanel.setMaximumSize(new Dimension(_width, _height));
+        // gameCanvas.setPreferredSize(new Dimension(_width, _height));
+        // gameCanvas.setMinimumSize(new Dimension(_width, _height));
+        // gameCanvas.setBounds(0, 0, _width, _height);
+        setCanvasSize(_width, _height);
         gameCanvas.setBackground(backgroundColor);
 
         gameCanvas.addMouseListener(this);
@@ -45,27 +55,66 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         gameCanvas.addKeyListener(this);
 
         gameContainer = getContentPane();
-        // gameContainer.setLayout(new FlowLayout(FlowLayout.CENTER));
-        // gameContainer.setPreferredSize(new Dimension(_width, _height));
         gameContainer.add(gameCanvas, 0);
-        // setLayout(new FlowLayout());
-        // setPreferredSize(new Dimension(_width, _height));
-        // add(gamePanel);
-        // pack();
 
-        setResizable(false);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        pack();
-        setVisible(true);
+        // setResizable(false);
+        // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // setLocationRelativeTo(null);
+        // pack();
+        // setVisible(true);
+
+        initScreen(isFullScreen);
 
         gameCanvas.requestFocus();
 
-        offscreenCanvas = gameCanvas.getBufferStrategy();
-        if (offscreenCanvas == null) {
-            gameCanvas.createBufferStrategy(3);
-            offscreenCanvas = gameCanvas.getBufferStrategy();
+        fetchBufferStrategy();
+
+        // offscreenCanvas = gameCanvas.getBufferStrategy();
+        // if (offscreenCanvas == null) {
+        // gameCanvas.createBufferStrategy(NUM_BUFFERS);
+        // offscreenCanvas = gameCanvas.getBufferStrategy();
+        // }
+    }
+
+    private void initScreen(boolean fullscreen) {
+        dispose();
+
+        if (!fullscreen) {
+            setResizable(false);
+            setUndecorated(false); // no menu bar, borders, etc.
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setLocationRelativeTo(null);
+            pack();
+            setVisible(true);
+        } else {
+            setUndecorated(true); // no menu bar, borders, etc.
+            setIgnoreRepaint(true); // turn off all paint events since doing active rendering
+            setResizable(false); // screen cannot be resized
+            pack();
+            setVisible(true);
         }
+
+        gameCanvas.requestFocus();
+    }
+
+    private void fetchBufferStrategy() {
+        try {
+            gameCanvas.createBufferStrategy(NUM_BUFFERS);
+        } catch (Exception e) {
+            System.out.println("Error while creating buffer strategy " + e);
+            System.exit(0);
+        }
+
+        offscreenCanvas = gameCanvas.getBufferStrategy();
+    }
+
+    private void setCanvasSize(int width, int height) {
+        Dimension size = new Dimension(width, height);
+        gameCanvas.setPreferredSize(size);
+        gameCanvas.setMinimumSize(size);
+        gameCanvas.setBounds(0, 0, width, height);
+        _width = width;
+        _height = height;
     }
 
     protected Graphics2D getContext() {
@@ -101,7 +150,8 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
 
-        // System.out.println("Key being pressed- Code: " + keyCode + " Text: " + keyName);
+        // System.out.println("Key being pressed- Code: " + keyCode + " Text: " +
+        // keyName);
 
         if (key._keysList.get(keyCode) == JevaKey._keyStates.nil || key._keysList.get(keyCode) == null)
             key._keysList.put(keyCode, JevaKey._keyStates.down);
@@ -169,7 +219,8 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         String mouseName = code == MouseEvent.BUTTON1 ? "name_left"
                 : code == MouseEvent.BUTTON2 ? "name_middle" : code == MouseEvent.BUTTON3 ? "name_right" : "name_nil";
 
-        // System.out.println("Mouse being pressed- Code: " + mouseCode + " Text: " + mouseName);
+        // System.out.println("Mouse being pressed- Code: " + mouseCode + " Text: " +
+        // mouseName);
 
         if (mouse._mouseList.get(mouseCode) == JevaMouse._mouseStates.nil
                 || mouse._mouseList.get(mouseCode) == null)
@@ -250,5 +301,54 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         Rectangle2D.Double otherRect = other.getBoundingRectangle();
 
         return thisRect.intersects(otherRect);
+    }
+
+    protected void requestFullscreen() { // standard procedure to get into FSEM
+        isFullScreen = true;
+
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        device = ge.getDefaultScreenDevice();
+
+        initScreen(isFullScreen);
+
+        if (!device.isFullScreenSupported()) {
+            System.out.println("Full-screen exclusive mode not supported");
+            System.exit(0);
+        }
+
+        device.setFullScreenWindow(this); // switch on full-screen exclusive mode
+
+        setCanvasSize(getBounds().width, getBounds().height);
+
+        fetchBufferStrategy();
+    }
+
+    protected void exitFullscreen() {
+        isFullScreen = false;
+
+        Window w = device.getFullScreenWindow();
+
+        if (w != null)
+            w.dispose();
+
+        device.setFullScreenWindow(null);
+
+        setCanvasSize(_initwidth, _initheight);
+
+        initScreen(isFullScreen);
+
+        fetchBufferStrategy();
+    }
+
+    protected boolean isFullscreen() {
+        return isFullScreen;
+    }
+
+    protected int getScreenWidth() {
+        return _width;
+    }
+
+    protected int getScreenHeight() {
+        return _height;
     }
 }

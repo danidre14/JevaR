@@ -715,7 +715,7 @@ public class GameApp4 {
                     double clipWidth = loaded_clip.props._width;
                     double clipBaseX = loaded_clip.props._x - clipWidth / 2;
 
-                    int offsetXLeft =  (int) (((camBaseX - clipBaseX) * 1.0) / POINTS_OFFSET);
+                    int offsetXLeft = (int) (((camBaseX - clipBaseX) * 1.0) / POINTS_OFFSET);
                     int offsetXRight = offsetXLeft + 3 + (int) ((camWidth) * 1.0 / POINTS_OFFSET);
 
                     Polygon polyGon = new Polygon();
@@ -874,152 +874,195 @@ public class GameApp4 {
             infoList.put("controls", "Use wasd or arrows to move.");
             infoList.put("shoot", "Press the spacebar key to shoot.");
 
-            jevar.createPrefab("info_manager", 0, 0, initWidth, initHeight, (loaded_self) -> {
-                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
-
-                loaded_clip.useGraphic("air");
-                loaded_clip.props._visible = false;
-                JevaText infoText = (JevaText) loaded_clip.addText("Information Text here", initWidth / 2, 0,
-                        initWidth, 60);
-                infoText.props.setAlign("c");
-                infoText.props.setFontSize(40);
-                infoText.props.setAnchorX(0.5);
-                infoText.props.setAnchorY(0);
-                infoText.props._backgroundColor = new Color(50, 22, 22, 50);
-
-                loaded_clip.addJevascript((self) -> {
-                    JevaPrefab clip = (JevaPrefab) self;
-
-                    JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
-
-                    if (mainChar == null) {
-                        clip.props._visible = false;
-                        return;
-                    }
-
-                    JevaPrefab infoSign = (JevaPrefab) mainChar.hitTestGet("info_sign");
-                    if (infoSign == null) {
-                        clip.props._visible = false;
-                    } else {
-                        String infoKey = infoSign.state.getString("info_key", "goal");
-                        infoText.props._text = "Note: " + infoList.get(infoKey);
-                        clip.props._visible = true;
-                    }
-                });
+            jevar.createJevascript("updateScreenDimensions", (self) -> {
+                JevaClip clip = (JevaClip) self;
+                clip.props._width = jevar.meta.getScreenWidth();
+                clip.props._height = jevar.meta.getScreenHeight();
             });
 
-            jevar.createPrefab("overlay", 0, 0, initWidth, initHeight, (loaded_self) -> {
-                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
-                loaded_clip.setDepth(overlayDepth);
-                JevaVCam vcam = jevar.getVCam("mainCamera");
+            jevar.createPrefab("info_manager", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
+                    (loaded_self) -> {
+                        JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
 
-                loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
-                    ctx.setColor(new Color(0, 0, 0, 120));
-                    ctx.fillRect(0, initHeight - 50, 560, 50);
-                    ctx.fillRect(initWidth - 560, initHeight - 50, 560, 50);
-                });
+                        loaded_clip.addJevascript("updateScreenDimensions");
 
-                loaded_clip.addText("Health: ", 10, initHeight - 50, 150, 50);
+                        loaded_clip.useGraphic("air");
+                        loaded_clip.props._visible = false;
+                        JevaText infoText = (JevaText) loaded_clip.addText("Information Text here",
+                                0, 0,
+                                jevar.meta.getScreenWidth(), 60);
+                        infoText.props.setAlign("c");
+                        infoText.props.setFontSize(40);
+                        infoText.props.setAnchorX(0);
+                        infoText.props.setAnchorY(0);
+                        infoText.props._backgroundColor = new Color(50, 22, 22, 50);
 
-                loaded_clip.addText("Level: 0", initWidth - 550, initHeight - 50, 200, 50, (loaded_score) -> {
-                    JevaText score_clip = (JevaText) loaded_score;
+                        loaded_clip.addJevascript((self) -> {
+                            JevaPrefab clip = (JevaPrefab) self;
 
-                    score_clip.addJevascript((score_clip_script) -> {
-                        score_clip.props._text = "Level: " + (jevar.state.getInt("currLevel") + 1);
+                            JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
+
+                            infoText.props._width = jevar.meta.getScreenWidth();
+
+                            if (mainChar == null) {
+                                clip.props._visible = false;
+                                return;
+                            }
+
+                            JevaPrefab infoSign = (JevaPrefab) mainChar.hitTestGet("info_sign");
+                            if (infoSign == null) {
+                                clip.props._visible = false;
+                            } else {
+                                String infoKey = infoSign.state.getString("info_key", "goal");
+                                infoText.props._text = "Note: " + infoList.get(infoKey);
+                                clip.props._visible = true;
+                            }
+                        });
                     });
-                });
-                loaded_clip.addPrefab(initWidth - 350, initHeight - 50, 60, 60, (cgc) -> {
-                    JevaPrefab coin_graphic_clip = (JevaPrefab) cgc;
 
-                    coin_graphic_clip.useSpriteSheet("coin_animation");
-                });
-                loaded_clip.addText("0", initWidth - 290, initHeight - 50, 300, 50, (loaded_score) -> {
-                    JevaText score_clip = (JevaText) loaded_score;
+            jevar.createPrefab("overlay", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
+                    (loaded_self) -> {
+                        JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                        loaded_clip.setDepth(overlayDepth);
 
-                    score_clip.addJevascript((score_clip_script) -> {
-                        score_clip.props._text = "" + jevar.state.getInt("score");
+                        loaded_clip.addJevascript("updateScreenDimensions");
+
+                        JevaVCam vcam = jevar.getVCam("mainCamera");
+
+                        loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
+                            ctx.setColor(new Color(0, 0, 0, 120));
+                            ctx.fillRect(0, jevar.meta.getScreenHeight() - 50, 560, 50);
+                            ctx.fillRect(jevar.meta.getScreenWidth() - 560, jevar.meta.getScreenHeight() - 50, 560, 50);
+                        });
+
+                        loaded_clip.addText("Health: ", 10, jevar.meta.getScreenHeight() - 50, 150, 50, (ht_tx) -> {
+                            JevaText ht_cp = (JevaText) ht_tx;
+
+                            ht_cp.addJevascript((score_clip_script) -> {
+                                ht_cp.props._y = jevar.meta.getScreenHeight() - 50;
+                            });
+                        });
+
+                        loaded_clip.addText("Level: 0", jevar.meta.getScreenWidth() - 550,
+                                jevar.meta.getScreenHeight() - 50, 200, 50, (loaded_score) -> {
+                                    JevaText score_clip = (JevaText) loaded_score;
+
+                                    score_clip.addJevascript((score_clip_script) -> {
+                                        score_clip.props._x = jevar.meta.getScreenWidth() - 550;
+                                        score_clip.props._y = jevar.meta.getScreenHeight() - 50;
+                                        score_clip.props._text = "Level: " + (jevar.state.getInt("currLevel") + 1);
+                                    });
+                                });
+                        loaded_clip.addPrefab(jevar.meta.getScreenWidth() - 350, jevar.meta.getScreenHeight() - 50, 60,
+                                60, (cgc) -> {
+                                    JevaPrefab coin_graphic_clip = (JevaPrefab) cgc;
+
+                                    coin_graphic_clip.addJevascript((clp) -> {
+                                        coin_graphic_clip.props._x = jevar.meta.getScreenWidth() - 350;
+                                        coin_graphic_clip.props._y = jevar.meta.getScreenHeight() - 50;
+                                    });
+
+                                    coin_graphic_clip.useSpriteSheet("coin_animation");
+                                });
+                        loaded_clip.addText("0", jevar.meta.getScreenWidth() - 290, jevar.meta.getScreenHeight() - 50,
+                                300, 50, (loaded_score) -> {
+                                    JevaText score_clip = (JevaText) loaded_score;
+
+                                    score_clip.addJevascript((score_clip_script) -> {
+                                        score_clip.props._x = jevar.meta.getScreenWidth() - 290;
+                                        score_clip.props._y = jevar.meta.getScreenHeight() - 50;
+                                        score_clip.props._text = "" + jevar.state.getInt("score");
+                                    });
+                                });
+
+                        loaded_clip.addPrefab(150, jevar.meta.getScreenHeight() - 50, 400, 50, (l) -> {
+                            JevaPrefab health_clip = (JevaPrefab) l;
+
+                            Image heartFullImg = jevar.getImage("life_full");
+                            Image heartEmptyImg = jevar.getImage("life_empty");
+                            int heartDistance = 10;
+                            int heartSize = (int) (health_clip.props._height * 0.6);
+                            int xOffset = 0;
+
+                            health_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
+                                int health = jevar.state.getInt("health");
+                                int maxHealth = jevar.state.getInt("maxHealth");
+                                for (int i = 0; i < health; i++) {
+                                    ctx.drawImage(heartFullImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
+                                            heartDistance + (int) _y,
+                                            (int) heartSize, (int) (heartSize), null);
+                                }
+                                for (int i = health; i < maxHealth; i++) {
+                                    ctx.drawImage(heartEmptyImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
+                                            heartDistance + (int) _y,
+                                            (int) heartSize, (int) (heartSize), null);
+                                }
+                            });
+
+                            health_clip.addJevascript((clp) -> {
+                                health_clip.props._y = jevar.meta.getScreenHeight() - 50;
+                            });
+                        });
+                        loaded_clip.addPrefab(150, jevar.meta.getScreenHeight() - 100, 410, 50, (l) -> {
+                            JevaPrefab breath_clip = (JevaPrefab) l;
+
+                            breath_clip.props.shiftAnchorX(0.5);
+
+                            Image breathFullImg = jevar.getImage("bubble_full");
+                            Image breathEmptyImg = jevar.getImage("bubble_empty");
+                            int bubbleSize = (int) (breath_clip.props._height * 0.6);
+                            int bubbleDistance = 10;
+
+                            breath_clip.addJevascript((clp) -> {
+                                breath_clip.props._y = jevar.meta.getScreenHeight() - 100;
+                            });
+
+                            breath_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
+                                JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
+
+                                if (mainChar == null)
+                                    return;
+
+                                int breath = mainChar.state.getInt("breath");
+                                int maxBreath = mainChar.state.getInt("maxBreath");
+
+                                if (breath == maxBreath)
+                                    return;
+
+                                ctx.setColor(new Color(0, 0, 0, 120));
+                                ctx.fillRect((int) _x, (int) _y, (int) _width, (int) _height);
+
+                                int bubblesWidth = (bubbleSize * maxBreath) + (bubbleDistance * (maxBreath - 1));
+                                int bubblesOffset = (int) (_width / 2) - (bubblesWidth / 2);
+                                for (int i = 0; i < breath; i++) {
+                                    ctx.drawImage(breathFullImg,
+                                            bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
+                                            bubbleDistance + (int) _y,
+                                            (int) bubbleSize, (int) (bubbleSize), null);
+                                }
+                                for (int i = breath; i < maxBreath; i++) {
+                                    ctx.drawImage(breathEmptyImg,
+                                            bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
+                                            bubbleDistance + (int) _y,
+                                            (int) bubbleSize, (int) (bubbleSize), null);
+                                }
+                            });
+                        });
+
+                        loaded_clip.addPrefab("info_manager");
+
+                        loaded_clip.addJevascript((self) -> {
+                            JevaPrefab clip = (JevaPrefab) self;
+
+                            if (vcam == null)
+                                return;
+
+                            clip.props._x = vcam.projection._x - vcam.projection._width / 2;
+                            clip.props._y = vcam.projection._y - vcam.projection._height / 2;
+                        });
                     });
-                });
 
-                loaded_clip.addPrefab(150, initHeight - 50, 400, 50, (l) -> {
-                    JevaPrefab health_clip = (JevaPrefab) l;
-
-                    Image heartFullImg = jevar.getImage("life_full");
-                    Image heartEmptyImg = jevar.getImage("life_empty");
-                    int heartDistance = 10;
-                    int heartSize = (int) (health_clip.props._height * 0.6);
-                    int xOffset = 0;
-
-                    health_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
-                        int health = jevar.state.getInt("health");
-                        int maxHealth = jevar.state.getInt("maxHealth");
-                        for (int i = 0; i < health; i++) {
-                            ctx.drawImage(heartFullImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
-                                    heartDistance + (int) _y,
-                                    (int) heartSize, (int) (heartSize), null);
-                        }
-                        for (int i = health; i < maxHealth; i++) {
-                            ctx.drawImage(heartEmptyImg, xOffset + (int) _x + ((heartSize + heartDistance) * i),
-                                    heartDistance + (int) _y,
-                                    (int) heartSize, (int) (heartSize), null);
-                        }
-                    });
-                });
-                loaded_clip.addPrefab(150, initHeight - 100, 410, 50, (l) -> {
-                    JevaPrefab breath_clip = (JevaPrefab) l;
-
-                    breath_clip.props.shiftAnchorX(0.5);
-
-                    Image breathFullImg = jevar.getImage("bubble_full");
-                    Image breathEmptyImg = jevar.getImage("bubble_empty");
-                    int bubbleSize = (int) (breath_clip.props._height * 0.6);
-                    int bubbleDistance = 10;
-
-                    breath_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
-                        JevaPrefab mainChar = (JevaPrefab) jevar.getJevaClip("mainChar");
-
-                        if (mainChar == null)
-                            return;
-
-                        int breath = mainChar.state.getInt("breath");
-                        int maxBreath = mainChar.state.getInt("maxBreath");
-
-                        if (breath == maxBreath)
-                            return;
-
-                        ctx.setColor(new Color(0, 0, 0, 120));
-                        ctx.fillRect((int) _x, (int) _y, (int) _width, (int) _height);
-
-                        int bubblesWidth = (bubbleSize * maxBreath) + (bubbleDistance * (maxBreath - 1));
-                        int bubblesOffset = (int) (_width / 2) - (bubblesWidth / 2);
-                        for (int i = 0; i < breath; i++) {
-                            ctx.drawImage(breathFullImg, bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
-                                    bubbleDistance + (int) _y,
-                                    (int) bubbleSize, (int) (bubbleSize), null);
-                        }
-                        for (int i = breath; i < maxBreath; i++) {
-                            ctx.drawImage(breathEmptyImg,
-                                    bubblesOffset + (int) _x + ((bubbleSize + bubbleDistance) * i),
-                                    bubbleDistance + (int) _y,
-                                    (int) bubbleSize, (int) (bubbleSize), null);
-                        }
-                    });
-                });
-
-                loaded_clip.addPrefab("info_manager");
-
-                loaded_clip.addJevascript((self) -> {
-                    JevaPrefab clip = (JevaPrefab) self;
-
-                    if (vcam == null)
-                        return;
-
-                    clip.props._x = vcam.projection._x - vcam.projection._width / 2;
-                    clip.props._y = vcam.projection._y - vcam.projection._height / 2;
-                });
-            });
-
-            jevar.createPrefab("ragdoll", initWidth / 2, 350, 100, 90, (loaded_self) -> {
+            jevar.createPrefab("ragdoll", jevar.meta.getScreenWidth() / 2, 350, 100, 90, (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("hurtable");
 
@@ -1764,28 +1807,35 @@ public class GameApp4 {
                     }
                 });
             });
-            jevar.createPrefab("background", 0, 0, initWidth, initHeight, (loaded_self) -> {
-                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+            jevar.createPrefab("background", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
+                    (loaded_self) -> {
+                        JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
 
-                JevaVCam vcam = jevar.getVCam("mainCamera");
-                loaded_clip.useGraphic("background_cave");
+                        loaded_clip.addJevascript("updateScreenDimensions");
 
-                loaded_clip.addJevascript((self) -> {
-                    JevaPrefab clip = (JevaPrefab) self;
+                        JevaVCam vcam = jevar.getVCam("mainCamera");
+                        loaded_clip.useGraphic("background_cave");
 
-                    if (vcam == null)
-                        return;
+                        loaded_clip.addJevascript((self) -> {
+                            JevaPrefab clip = (JevaPrefab) self;
 
-                    clip.props._x = vcam.projection._x - vcam.projection._width / 2;
-                    clip.props._y = vcam.projection._y - vcam.projection._height / 2;
-                });
-            });
+
+                            clip.props._width = jevar.meta.getScreenWidth() + 100;
+                            clip.props._height = jevar.meta.getScreenHeight() + 100;
+
+                            if (vcam == null)
+                                return;
+
+                            clip.props._x = -50 + vcam.projection._x - vcam.projection._width / 2;
+                            clip.props._y = -50 + vcam.projection._y - vcam.projection._height / 2;
+                        });
+                    });
 
             jevar.createText("textfield1", "Hello World", 0, 450, 300, 400,
                     (loaded_self) -> {
                         JevaText loaded_clip = (JevaText) loaded_self;
                         loaded_clip.props.setFontSize(24);
-                        loaded_clip.props._x = initWidth / 2;
+                        loaded_clip.props._x = jevar.meta.getScreenWidth() / 2;
                         // loaded_clip.props._y = 40;
                         loaded_clip.props.setAnchorX(0.5);
                         loaded_clip.props.setAnchorY(1);
@@ -1824,10 +1874,10 @@ public class GameApp4 {
                         });
                     });
 
-            jevar.createText("button", "BUTTON", initWidth / 2, 350, 200, 80, (t) -> {
+            jevar.createText("button", "BUTTON", jevar.meta.getScreenWidth() / 2, 350, 200, 80, (t) -> {
                 JevaText loaded_clip = (JevaText) t;
 
-                loaded_clip.state.setDouble("initHeight", loaded_clip.props._height);
+                loaded_clip.state.setDouble("jevar.meta.getScreenHeight()", loaded_clip.props._height);
                 loaded_clip.props._width = (int) loaded_clip.props._height * 20 / 6;
                 loaded_clip.props.setFontSize((int) loaded_clip.props._height * 5 / 6);
 
@@ -1841,13 +1891,15 @@ public class GameApp4 {
                     JevaText clip = (JevaText) self;
                     clip.state.setBoolean("isClicked", false);
 
+                    clip.props._x = jevar.meta.getScreenWidth() / 2;
+
                     if (clip.props.isHovered()) {
-                        double height = clip.state.getDouble("initHeight") * 1.2;
+                        double height = clip.state.getDouble("jevar.meta.getScreenHeight()") * 1.2;
                         loaded_clip.props._height = height;
                         loaded_clip.props._width = (int) height * 20 / 6;
                         loaded_clip.props.setFontSize((int) height * 5 / 6);
                     } else {
-                        double height = clip.state.getDouble("initHeight");
+                        double height = clip.state.getDouble("jevar.meta.getScreenHeight()");
                         loaded_clip.props._height = height;
                         loaded_clip.props._width = (int) height * 20 / 6;
                         loaded_clip.props.setFontSize((int) height * 5 / 6);
@@ -1868,28 +1920,41 @@ public class GameApp4 {
             jevar.createScene("menuScene", (s) -> {
                 JevaScene scene = (JevaScene) s;
 
-                scene.addText("CAVE CLIMB", initWidth / 2, 80, initWidth * 0.8, 150, (t) -> {
-                    JevaText loaded_clip = (JevaText) t;
+                scene.addText("CAVE CLIMB", jevar.meta.getScreenWidth() / 2, 80, jevar.meta.getScreenWidth() * 0.8, 150,
+                        (t) -> {
+                            JevaText loaded_clip = (JevaText) t;
 
-                    loaded_clip.props.setAnchorX(0.5);
-                    loaded_clip.props.setAlign("c");
-                });
+                            loaded_clip.props.setAnchorX(0.5);
+                            loaded_clip.props.setAlign("c");
+
+                            loaded_clip.addJevascript((self) -> {
+                                JevaText clip = (JevaText) self;
+
+                                clip.props._x = jevar.meta.getScreenWidth() / 2;
+                            });
+                        });
 
                 scene.addText("Credits:\nMade by Micah Brereton and Carlonn Rivers\nCOMP3609 Game Programming Project",
-                        40, initHeight - 40, initWidth * 0.8, 65, (t) -> {
+                        40, jevar.meta.getScreenHeight() - 40, jevar.meta.getScreenWidth() * 0.8, 65, (t) -> {
                             JevaText loaded_clip = (JevaText) t;
 
                             loaded_clip.props.setFontSize(20);
 
                             loaded_clip.props.setAnchorX(0);
                             loaded_clip.props.setAnchorY(1);
+
+                            loaded_clip.addJevascript((self) -> {
+                                JevaText clip = (JevaText) self;
+
+                                clip.props._y = jevar.meta.getScreenHeight() -40;
+                            });
                         });
 
                 scene.addText("button", (t) -> {
                     JevaText loaded_text = (JevaText) t;
 
                     loaded_text.props._text = "PLAY";
-                    loaded_text.props._x = initWidth / 2;
+                    loaded_text.props._x = jevar.meta.getScreenWidth() / 2;
                     loaded_text.props._y = 350;
 
                     loaded_text.addJevascript((self) -> {
@@ -1904,7 +1969,7 @@ public class GameApp4 {
                     JevaText loaded_text = (JevaText) t;
 
                     loaded_text.props._text = "EXIT";
-                    loaded_text.props._x = initWidth / 2;
+                    loaded_text.props._x = jevar.meta.getScreenWidth() / 2;
                     loaded_text.props._y = 500;
 
                     loaded_text.addJevascript((self) -> {
@@ -1920,7 +1985,8 @@ public class GameApp4 {
             jevar.createScene("gameScene", (s) -> {
                 JevaScene scene = (JevaScene) s;
 
-                JevaVCam cam1 = scene.addVCam("mainCamera", 0, 0, initWidth, initHeight);
+                JevaVCam cam1 = scene.addVCam("mainCamera", 0, 0, jevar.meta.getScreenWidth(),
+                        jevar.meta.getScreenHeight());
                 cam1.centerPAnchors();
 
                 scene.addTileMap("worldMap").setDepth(worldMapDepth);
@@ -1929,6 +1995,13 @@ public class GameApp4 {
                 scene.addPrefab("flood").setDepth(floodDepth);
 
                 scene.addPrefab("overlay").setDepth(overlayDepth);
+
+                scene.addJevascript((scn) -> {
+                    cam1.projection._width = jevar.meta.getScreenWidth();
+                    cam1.projection._height = jevar.meta.getScreenHeight();
+                    cam1.viewport._width = jevar.meta.getScreenWidth();
+                    cam1.viewport._height = jevar.meta.getScreenHeight();
+                });
             });
 
             jevar.useScene("menuScene");
@@ -1955,6 +2028,9 @@ public class GameApp4 {
                 }
                 if (key.isPressed(JevaKey.V)) {
                     core.alterTimeScale(0.25);
+                }
+                if (key.isPressed(JevaKey.F)) {
+                    core.meta.toggleFullscreen();
                 }
                 if (key.isPressed(JevaKey.M)) {
                     // core.sound

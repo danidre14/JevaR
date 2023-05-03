@@ -5,6 +5,7 @@ import java.util.*;
 
 public class JevaR implements Runnable {
     protected JevaScreen screen;
+
     protected HashMap<String, JevaClip> jevaclipLibrary;
     protected HashMap<String, JevaScript> jevascriptLibrary;
     protected HashMap<String, JevaFunction> jevafunctionLibrary;
