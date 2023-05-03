@@ -794,7 +794,7 @@ public class GameApp4 {
                         boolean charSubmerged = clip.state.getBoolean("charSubmerged");
                         double surfaceY = clip.props._y - clip.props._height + Y_OFFSET;
                         double boundX = (clip.props._x - clip.props._width / 2);
-                        double exitWaterSplashForce = -40;
+                        double exitWaterSplashForce = -60;
                         double enterWaterSplashForce = 50;
                         double stepSplashForce = 30;
                         if (surfaceY < mainChar.props._y && !charTouchingWater) {
