@@ -54,6 +54,14 @@ public class JevaUtils {
         return new File(path).isFile();
     }
 
+    public static int pixelToBlock(double pixels, double blockSize) {
+        return (int) Math.floor(pixels / blockSize);
+    }
+
+    public static int blockToPixel(int block, double blockSize) {
+        return (int) (block * blockSize);
+    }
+
     public static Color color(String hex) {
         hex = hex.replace("#", "");
         switch (hex.length()) {

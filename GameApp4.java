@@ -17,6 +17,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class GameApp4 {
             jevar.createSound("underwater_ambience", 1).setVolume(0.5);
             jevar.createSound("drop_water_splash", 5).setVolume(0.95);
             jevar.createSound("step_splash_sfx", 5).setVolume(0.65);
+            jevar.createSound("step_sfx", 5).setVolume(1);
             jevar.createSound("open_chest_sfx", 3);
             jevar.createSound("chest_open_sfx", 3).setVolume(0.5);
             jevar.createSound("skele_walk_sfx");
@@ -71,14 +73,17 @@ public class GameApp4 {
             jevar.createSound("skele_dead_sfx").setVolume(0.6);
             jevar.createSound("jump_sfx", 5).setVolume(0.3);
             jevar.createSound("shoot_sfx", 5).setVolume(0.6);
-            jevar.createSound("coin_collect_sfx", 5).setVolume(0.6);
+            jevar.createSound("coin_collect_sfx", 5).setVolume(0.9);
             jevar.createSound("skele_hit_sfx").setVolume(0.6);
             jevar.createSound("baddie_dead_sfx", 5).setVolume(0.6);
             jevar.createSound("player_hit_sfx", 3).setVolume(0.9);
             jevar.createSound("game_over_sfx", 1).setVolume(0.7);
             jevar.createSound("baddie_hit_sfx", 5).setVolume(0.6);
             jevar.createSound("chest_near_sfx");
+            jevar.createSound("button_hover_sfx", 4);
+            jevar.createSound("button_press_sfx", 2);
             jevar.createSound("ghost_baddie_howl");
+            jevar.createSound("bat_baddie_screech").setVolume(0.5);
             jevar.createSound("health_collected", 5).setVolume(0.7);
             jevar.createSound("background_music").setVolume(0.5);
 
@@ -531,7 +536,7 @@ public class GameApp4 {
                 // https://gamedev.stackexchange.com/questions/44547/how-do-i-create-2d-water-with-dynamic-waves
 
                 // Resolution of simulation
-                int NUM_POINTS = map._tileWidth;
+                int NUM_POINTS = (int) (map._tileWidth * 1.5);
                 // Width of simulation
                 double WIDTH = loaded_clip.props._width + tileSize * 2;
                 // Spring constant for forces applied by adjacent points
@@ -539,12 +544,12 @@ public class GameApp4 {
                 // Sprint constant for force applied to baseline
                 double SPRING_CONSTANT_BASELINE = 0.01;
                 // Vertical draw offset of simulation
-                final double Y_OFFSET = 60;
+                final double Y_OFFSET = 100;
                 // Damping to apply to speed changes
                 double DAMPING = 0.9858;
                 // Number of iterations of point-influences-point to do on wave per step
                 // (this makes the waves animate faster)
-                int ITERATIONS = 3;
+                int ITERATIONS = 4;
 
                 double POINTS_OFFSET = (1.0 / NUM_POINTS) * WIDTH;
 
@@ -582,7 +587,7 @@ public class GameApp4 {
                         }
 
                     }
-                    closestPoint.y = yForce;
+                    closestPoint.y += yForce;
 
                     wavePoints.set(closestN, closestPoint);
                     loaded_clip.state
@@ -691,17 +696,25 @@ public class GameApp4 {
                     return points;
                 });
 
+                loaded_clip.state.setLong("updateWaveTime", 0);
+                loaded_clip.state.setInt("updateWaveInt", 50);
+
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
 
                     clip.state.alterInt("offset", 1);
-                    @SuppressWarnings("unchecked")
-                    ArrayList<WavePoint> wavePoints = (ArrayList<GameApp4.WavePoint>) clip.state.getState("wavePoints");
 
-                    @SuppressWarnings("unchecked")
-                    ArrayList<WavePoint> newWavePoints = (ArrayList<GameApp4.WavePoint>) jevar
-                            .execFunc("updateWavePoints", wavePoints, jevar.getDelta());
-                    loaded_clip.state.setState("wavePoints", newWavePoints);
+                    if (jevar.currentClockMillis() - clip.state.getLong("updateWaveTime") > clip.state
+                            .getInt("updateWaveInt")) {
+                                clip.state.setLong("updateWaveTime", jevar.currentClockMillis());
+                        @SuppressWarnings("unchecked")
+                        ArrayList<WavePoint> wavePoints = (ArrayList<GameApp4.WavePoint>) clip.state
+                                .getState("wavePoints");
+                        @SuppressWarnings("unchecked")
+                        ArrayList<WavePoint> newWavePoints = (ArrayList<GameApp4.WavePoint>) jevar
+                                .execFunc("updateWavePoints", wavePoints, jevar.getDelta());
+                        loaded_clip.state.setState("wavePoints", newWavePoints);
+                    }
                 });
 
                 loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
@@ -781,16 +794,17 @@ public class GameApp4 {
                         boolean charSubmerged = clip.state.getBoolean("charSubmerged");
                         double surfaceY = clip.props._y - clip.props._height + Y_OFFSET;
                         double boundX = (clip.props._x - clip.props._width / 2);
-                        double jumpLandSplashForce = 150;
-                        double stepSplashForce = 100;
+                        double exitWaterSplashForce = -40;
+                        double enterWaterSplashForce = 50;
+                        double stepSplashForce = 30;
                         if (surfaceY < mainChar.props._y && !charTouchingWater) {
                             charTouchingWater = true;
-                            jevar.execFunc("splashWave", mainChar.props._x - boundX, jumpLandSplashForce);
+                            jevar.execFunc("splashWave", mainChar.props._x - boundX, enterWaterSplashForce);
                             jevar.getSound("drop_water_splash").playOnce();
                         }
                         if (surfaceY > mainChar.props._y && charTouchingWater) {
                             charTouchingWater = false;
-                            jevar.execFunc("splashWave", mainChar.props._x - boundX, -jumpLandSplashForce);
+                            jevar.execFunc("splashWave", mainChar.props._x - boundX, exitWaterSplashForce);
                             jevar.getSound("drop_water_splash").playOnce();
                         }
                         if (charTouchingWater && !charSubmerged && canSplash && (mainChar.state.getBoolean("goingLeft")
@@ -1484,6 +1498,10 @@ public class GameApp4 {
                 loaded_clip.state.setString("rd_swim_anim", "char_swim_animation");
                 loaded_clip.state.setString("rd_dead_anim", "char_dead_animation");
 
+                loaded_clip.state.setLong("stepTimer", 0);
+                loaded_clip.state.setInt("stepWait", 300);
+                loaded_clip.state.setBoolean("canStep", false);
+
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
 
@@ -1492,12 +1510,19 @@ public class GameApp4 {
                     boolean wonGame = clip.state.getBoolean("wonGame");
 
                     boolean isUnderwater = clip.state.getBoolean("isUnderwater");
+                    boolean touchingFloor = clip.state.getBoolean("touchingFloor");
                     int breathWait = clip.state.getInt("breathWait");
                     long breathTime = clip.state.getLong("breathTime");
                     int breath = clip.state.getInt("breath");
                     int maxBreath = clip.state.getInt("maxBreath");
                     String shootAnim = clip.state.getString("rd_shoot_anim");
                     String idleAnim = clip.state.getString("rd_idle_anim");
+
+                    boolean charTouchingWater = clip.state.getBoolean("charTouchingWater");
+                    boolean canStep = clip.state.getBoolean("canStep");
+                    boolean charSubmerged = clip.state.getBoolean("charSubmerged");
+                    long stepTimer = clip.state.getLong("stepTimer");
+                    int stepWait = clip.state.getInt("stepWait");
 
                     if (wonGame) {
                         clip.state.setBoolean("reserveAnim", true);
@@ -1513,6 +1538,21 @@ public class GameApp4 {
                     clip.state.setBoolean("goingRight", (key.isDown(JevaKey.RIGHT) || key.isDown(JevaKey.D)));
                     clip.state.setBoolean("goingUp", (key.isDown(JevaKey.UP) || key.isDown(JevaKey.W)));
                     clip.state.setBoolean("goingDown", (key.isDown(JevaKey.DOWN) || key.isDown(JevaKey.S)));
+
+                    boolean movingLeftOrRight = (clip.state.getBoolean("goingLeft")
+                            || clip.state.getBoolean("goingRight"));
+
+                    if (!charTouchingWater && !charSubmerged && touchingFloor && canStep && movingLeftOrRight) {
+                        canStep = false;
+                        stepTimer = jevar.currentClockMillis();
+                        jevar.getSound("step_sfx").playOnce();
+                    }
+                    if (!canStep && (jevar.currentClockMillis() - stepTimer > stepWait)) {
+                        canStep = true;
+                    }
+
+                    clip.state.setBoolean("canStep", canStep);
+                    clip.state.setLong("stepTimer", stepTimer);
 
                     if (key.isPressed("space") && !clip.state.getBoolean("playerShooting", false)) {
                         JevaScene currScene = jevar.getCurrentScene();
@@ -1705,7 +1745,10 @@ public class GameApp4 {
 
             jevar.createPrefab("bat_baddie", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
-                loaded_clip.extend("collectible").extend("ragdoll");
+                loaded_clip.extend("collectible").extend("ragdoll").extend("dynamic_sound");
+
+                loaded_clip.state.setString("ds_targetClip", "mainChar");
+                loaded_clip.state.setString("ds_soundSource", jevar.copySound("bat_baddie_screech"));
 
                 loaded_clip.state.setInt("health", 3);
                 loaded_clip.state.setBoolean("goingLeft", true);
@@ -1814,11 +1857,50 @@ public class GameApp4 {
                         loaded_clip.addJevascript("updateScreenDimensions");
 
                         JevaVCam vcam = jevar.getVCam("mainCamera");
-                        loaded_clip.useGraphic("background_cave");
+                        JevaTileMap map = (JevaTileMap) jevar.getJevaClip("worldMap");
+                        Image image1 = jevar.getImage("r_parallax_cave_1");
+                        Image image2 = jevar.getImage("r_parallax_cave_2");
+                        Image image3 = jevar.getImage("r_parallax_cave_3");
+                        Image image4 = jevar.getImage("r_parallax_cave_4");
+                        double imgW = image1.getWidth(null);
+                        double imgH = image1.getHeight(null);
+                        // loaded_clip.useGraphic("background_cave");
+
+                        loaded_clip.usePainting((ctx, x, y, w, h, state) -> {
+                            if (vcam == null || map == null)
+                                return;
+
+                            double currH = h + 100;
+                            int newY = (int) (y - 50);
+                            // double currH = map.props._height;
+                            // int newY = (int) -((vcam.projection._y - vcam.projection._height / 2) -
+                            // map.props._y);
+
+                            int newW = (int) (imgW / imgH * currH);
+
+                            double vcamLeft = vcam.projection._x - vcam.projection._width / 2;
+                            int widthLeft = JevaUtils.pixelToBlock(vcamLeft - map.props._x, newW) - 1;
+
+                            double vcamRight = vcam.projection._x + vcam.projection._width / 2;
+                            int widthRight = JevaUtils.pixelToBlock(vcamRight + map.props._x, newW) + 1;
+
+                            ctx.drawImage(image4, (int) x, (int) y, (int) w, (int) h, null);
+                            for (int i = (int) (widthLeft) - 5; i < (int) (widthRight) + 5; i++)
+                                ctx.drawImage(image3, (int) ((i * newW) - (vcamLeft + (vcamLeft * 0.25))), newY,
+                                        (int) newW,
+                                        (int) currH, null);
+                            for (int i = (int) (widthLeft) - 3; i < (int) (widthRight) + 3; i++)
+                                ctx.drawImage(image2, (int) ((i * newW) - (vcamLeft + (vcamLeft * 0.1))), newY,
+                                        (int) newW,
+                                        (int) currH, null);
+                            for (int i = widthLeft; i < widthRight; i++)
+                                ctx.drawImage(image1, (int) ((i * newW) - vcamLeft), newY, (int) newW, (int) currH,
+                                        null);
+
+                        });
 
                         loaded_clip.addJevascript((self) -> {
                             JevaPrefab clip = (JevaPrefab) self;
-
 
                             clip.props._width = jevar.meta.getScreenWidth() + 100;
                             clip.props._height = jevar.meta.getScreenHeight() + 100;
@@ -1877,7 +1959,8 @@ public class GameApp4 {
             jevar.createText("button", "BUTTON", jevar.meta.getScreenWidth() / 2, 350, 200, 80, (t) -> {
                 JevaText loaded_clip = (JevaText) t;
 
-                loaded_clip.state.setDouble("jevar.meta.getScreenHeight()", loaded_clip.props._height);
+                loaded_clip.state.setDouble("initialWidth", loaded_clip.props._height);
+                loaded_clip.state.setBoolean("justRolledOver", false);
                 loaded_clip.props._width = (int) loaded_clip.props._height * 20 / 6;
                 loaded_clip.props.setFontSize((int) loaded_clip.props._height * 5 / 6);
 
@@ -1891,19 +1974,26 @@ public class GameApp4 {
                     JevaText clip = (JevaText) self;
                     clip.state.setBoolean("isClicked", false);
 
+                    boolean justRolledOver = clip.state.getBoolean("justRolledOver");
                     clip.props._x = jevar.meta.getScreenWidth() / 2;
 
                     if (clip.props.isHovered()) {
-                        double height = clip.state.getDouble("jevar.meta.getScreenHeight()") * 1.2;
+                        double height = clip.state.getDouble("initialWidth") * 1.2;
+                        if (!justRolledOver) {
+                            jevar.getSound("button_hover_sfx").playOnce();
+                        }
+                        justRolledOver = true;
                         loaded_clip.props._height = height;
                         loaded_clip.props._width = (int) height * 20 / 6;
                         loaded_clip.props.setFontSize((int) height * 5 / 6);
                     } else {
-                        double height = clip.state.getDouble("jevar.meta.getScreenHeight()");
+                        double height = clip.state.getDouble("initialWidth");
+                        justRolledOver = false;
                         loaded_clip.props._height = height;
                         loaded_clip.props._width = (int) height * 20 / 6;
                         loaded_clip.props.setFontSize((int) height * 5 / 6);
                     }
+                    loaded_clip.state.setBoolean("justRolledOver", justRolledOver);
 
                     if (jevar.mouse.isPressed(JevaMouse.LEFT) && clip.props.isHovered()) {
                         clip.state.setBoolean("pressed", true);
@@ -1911,6 +2001,7 @@ public class GameApp4 {
                     if (jevar.mouse.isReleased(JevaMouse.LEFT) && clip.state.getBoolean("pressed")) {
                         if (clip.props.isHovered()) {
                             clip.state.setBoolean("isClicked", true);
+                            jevar.getSound("button_press_sfx").playOnce();
                         }
                         clip.state.setBoolean("pressed", false);
                     }
@@ -1920,6 +2011,13 @@ public class GameApp4 {
             jevar.createScene("menuScene", (s) -> {
                 JevaScene scene = (JevaScene) s;
 
+                scene.addPrefab(0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenWidth(), (loaded_self) -> {
+                    JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+
+                    loaded_clip.addJevascript("updateScreenDimensions");
+                    loaded_clip.useGraphic("background_cave");
+
+                });
                 scene.addText("CAVE CLIMB", jevar.meta.getScreenWidth() / 2, 80, jevar.meta.getScreenWidth() * 0.8, 150,
                         (t) -> {
                             JevaText loaded_clip = (JevaText) t;
@@ -1946,7 +2044,7 @@ public class GameApp4 {
                             loaded_clip.addJevascript((self) -> {
                                 JevaText clip = (JevaText) self;
 
-                                clip.props._y = jevar.meta.getScreenHeight() -40;
+                                clip.props._y = jevar.meta.getScreenHeight() - 40;
                             });
                         });
 
@@ -2009,11 +2107,11 @@ public class GameApp4 {
             jevar.attachJevascript((s) -> {
                 JevaR core = (JevaR) s;
 
-                if (key.isReleased("1")) {
-                    core.useScene("menuScene");
-                } else if (key.isReleased("2")) {
-                    core.useScene("gameScene");
-                }
+                // if (key.isReleased("1")) {
+                // core.useScene("menuScene");
+                // } else if (key.isReleased("2")) {
+                // core.useScene("gameScene");
+                // }
                 if (key.isReleased("Q")) {
                     meta.closeApplication();
                 }
