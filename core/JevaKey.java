@@ -64,22 +64,25 @@ public class JevaKey {
     public static int Y = KeyEvent.VK_Y;
     public static int Z = KeyEvent.VK_Z;
 
+    
     protected static enum _keyStates {
         nil,
         down,
         up,
         expired
     }
-
+    
     protected HashMap<String, _keyStates> _keysList;
     protected HashMap<String, _keyStates> _keysPressed;
     protected HashMap<String, _keyStates> _keysReleased;
+    protected char lastKeyReleased;
 
     protected JevaKey(JevaR core) {
         this.core = core;
         _keysList = new HashMap<>();
         _keysPressed = new HashMap<>();
         _keysReleased = new HashMap<>();
+        lastKeyReleased = 0;
     }
 
     public boolean isDown(int keyCode) {
@@ -130,7 +133,13 @@ public class JevaKey {
         return keyReleased;
     }
 
+    public char getTyped() {
+        return lastKeyReleased;
+    }
+
     protected void clearKeyStates(boolean absolute) {
+        lastKeyReleased = 0;
+
         for (Map.Entry<String, _keyStates> entry : _keysPressed.entrySet()) {
             // String _keyCode = entry.getKey();
             // _keyStates _keyState = entry.getValue();
@@ -149,7 +158,6 @@ public class JevaKey {
             // _keysReleased.put(_keyCode, _keyStates.nil);
         }
         if (absolute)
-
             for (Map.Entry<String, _keyStates> entry : _keysList.entrySet()) {
                 entry.setValue(_keyStates.nil);
                 // String _keyCode = entry.getKey();

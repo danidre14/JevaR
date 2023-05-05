@@ -38,6 +38,30 @@ public class JevaUtils {
         return Math.round(val);
     }
 
+    public static int randomInt(double max) {
+        return (int) randomDouble(0, max);
+    }
+
+    public static int randomInt(double min, double max) {
+        return (int) randomDouble(min, max);
+    }
+
+    public static float randomFloat(double max) {
+        return (float) randomDouble(0, max);
+    }
+
+    public static float randomFloat(double min, double max) {
+        return (float) randomDouble(min, max);
+    }
+
+    public static double randomDouble(double max) {
+        return randomDouble(0, max);
+    }
+
+    public static double randomDouble(double min, double max) {
+        return (Math.random() * (max - min)) + min;
+    }
+
     public static int clampInt(double val, double min, double max) {
         return (int) clampDouble(val, min, max);
     }

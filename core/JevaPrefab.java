@@ -80,7 +80,8 @@ public class JevaPrefab extends JevaClip {
 
     public void useSpriteSheet(String _label, int numLoops) {
         useSpriteSheet(_label, numLoops, null);
-    }   
+    }
+
     public void useSpriteSheet(String _label, int numLoops, JevaFunction func) {
         if (appearanceName.equals(_label) && appearanceType == appearances.spritesheet)
             return;
@@ -89,6 +90,7 @@ public class JevaPrefab extends JevaClip {
         if (source == null)
             return;
 
+        source = source.clone();
         source.reset(numLoops, func);
 
         appearanceName = _label;

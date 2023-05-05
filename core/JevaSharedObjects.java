@@ -1,6 +1,8 @@
 package core;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.StringTokenizer;
@@ -43,7 +45,7 @@ public class JevaSharedObjects {
 
             StringTokenizer st = new StringTokenizer(line, ":");
             st.nextToken(); // key
-            String _uvalue = st.nextToken();
+            String _uvalue = st.hasMoreTokens() ? st.nextToken() : "";
             String _value = _deobfuscateString(_uvalue);
             _cleanup();
             return _value;
@@ -258,6 +260,8 @@ public class JevaSharedObjects {
     }
 
     private static String _deobfuscateString(String string) {
+        if (string == "")
+            return "";
         return _unescapeString(_decodeFromBase64(string));
     }
 }

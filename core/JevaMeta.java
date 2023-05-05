@@ -8,8 +8,7 @@ public class JevaMeta {
     }
 
     public void closeApplication() {
-        if (this.core != null)
-            System.exit(0);
+        core.shutdownEngine();
     }
 
     public void setFullscreen(boolean value) {

@@ -35,7 +35,8 @@ public class JevaSpriteSheet {
         numLoops = 0;
         loopCount = 0;
         endFunc = null;
-        _init.call(this);
+        if (_init != null)
+            _init.call(this);
     }
 
     /**
@@ -58,7 +59,7 @@ public class JevaSpriteSheet {
             return;
 
         totalDuration += duration;
-        frames.add(new AnimFrame(source, totalDuration));
+        frames.add(new AnimFrame(source, duration, totalDuration));
     }
 
     public void stripUp(String _label, int frames, int fps) {
@@ -173,13 +174,31 @@ public class JevaSpriteSheet {
     }
 
     private class AnimFrame { // inner class for the frames of the animation
-
         Image image;
+        long duration;
         long endTime;
 
-        private AnimFrame(Image image, long endTime) {
+        private AnimFrame(Image image, long duration, long endTime) {
             this.image = image;
+            this.duration = duration;
             this.endTime = endTime;
         }
+
+        protected AnimFrame clone() {
+            AnimFrame frame = new AnimFrame(image, duration, endTime);
+
+            return frame;
+        }
+    }
+
+    protected JevaSpriteSheet clone() {
+        JevaSpriteSheet sheet = new JevaSpriteSheet(core, null);
+
+        for (int i = 0; i < frames.size(); i++) {
+            AnimFrame frame = frames.get(i);
+            sheet.addFrame(frame.image, frame.duration);
+        }
+
+        return sheet;
     }
 }

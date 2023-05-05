@@ -62,6 +62,12 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         // setLocationRelativeTo(null);
         // pack();
         // setVisible(true);
+        
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent ev) {
+                core.shutdownEngine();
+            }
+        });
 
         initScreen(isFullScreen);
 
@@ -82,7 +88,8 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         if (!fullscreen) {
             setResizable(false);
             setUndecorated(false); // no menu bar, borders, etc.
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             setLocationRelativeTo(null);
             pack();
             setVisible(true);
@@ -150,8 +157,6 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
 
-        // System.out.println("Key being pressed- Code: " + keyCode + " Text: " +
-        // keyName);
 
         if (key._keysList.get(keyCode) == JevaKey._keyStates.nil || key._keysList.get(keyCode) == null)
             key._keysList.put(keyCode, JevaKey._keyStates.down);
@@ -169,6 +174,10 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         int code = e.getKeyCode();
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
+        char keyChar = (char) code;
+
+        // System.out.println("Key being pressed- Code: " + keyCode + " Name: " +
+        // keyName + " Char: '" + ((char) code) + "'");
 
         if (key._keysList.get(keyCode) == JevaKey._keyStates.down)
             key._keysList.put(keyCode, JevaKey._keyStates.nil);
@@ -190,8 +199,15 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
                     && (key._keysReleased.get(keyName) == JevaKey._keyStates.nil
                             || key._keysReleased.get(keyName) == null)) {
                 key._keysReleased.put(keyName, JevaKey._keyStates.down);
+                setLastKey(keyChar);
             }
             key._keysPressed.put(keyName, JevaKey._keyStates.nil);
+        }
+    }
+
+    private void setLastKey(char letter) {
+        if((letter >= '0' && letter <= '9') || (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z') || letter == ' ') {
+            core.key.lastKeyReleased = letter;
         }
     }
 
@@ -346,7 +362,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         if (type == Cursor.HAND_CURSOR)
             return "pointer";
         // else if (type == Cursor.DEFAULT_CURSOR)
-        //     return "default";
+        // return "default";
         else
             return "default";
     }

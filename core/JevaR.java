@@ -976,6 +976,10 @@ public class JevaR implements Runnable {
             _resetScene();
     }
 
+    protected void shutdownEngine() {
+        System.exit(0);
+    }
+
     protected boolean isDebugMode() {
         return debugMode;
     }
