@@ -200,8 +200,8 @@ public class JevaTileMap extends JevaClip {
                 if (getTileCode(x, y) != k)
                     continue;
                 _tileMap[x][y].tileType = _label;
-                int _x = JevaUtils.roundInt(props._x + tilesToPixelsX(x));
-                int _y = JevaUtils.roundInt(props._y + tilesToPixelsY(y));
+                int _x = tilesToPixelsX(x);
+                int _y = tilesToPixelsY(y);
                 JevaClip addedClip = scene.addPrefab(_label, _x, _y, onLoad).setDepth(clipDepth);
                 if (isLoaded || isLoading) {
                     addedClip.load();
@@ -338,19 +338,19 @@ public class JevaTileMap extends JevaClip {
     }
 
     public int pixelsToTilesX(double pixels) {
-        return (int) Math.floor(pixels / _tileWidth);
+        return (int) Math.floor((pixels - props._x) / _tileWidth);
     }
 
     public int tilesToPixelsX(int numTiles) {
-        return numTiles * _tileWidth;
+        return JevaUtils.roundInt((numTiles * _tileWidth) + props._x);
     }
 
     public int pixelsToTilesY(double pixels) {
-        return (int) Math.floor(pixels / _tileHeight);
+        return (int) Math.floor((pixels - props._y) / _tileHeight);
     }
 
     public int tilesToPixelsY(int numTiles) {
-        return numTiles * _tileHeight;
+        return JevaUtils.roundInt((numTiles * _tileHeight ) + props._y);
     }
 
     public int pixelTileX(double coords) {
@@ -369,19 +369,6 @@ public class JevaTileMap extends JevaClip {
     protected void tick() {
         if (!isLoaded || shouldRemove())
             return;
-
-        // int screenLeft = 0;
-        // int screenWidth = core.screen.getWidth();
-        // int screenTop = 0;
-        // int screenHeight = core.screen.getHeight();
-        // tileLeft = JevaUtils.clampInt(pixelsToTilesX(screenLeft - this._x), 0,
-        // _mapWidth);
-        // tileRight = JevaUtils.clampInt(pixelsToTilesX(screenLeft - this._x +
-        // screenWidth), 0, _mapWidth);
-        // tileTop = JevaUtils.clampInt(pixelsToTilesX(screenTop - this._y), 0,
-        // _mapHeight);
-        // tileBottom = JevaUtils.clampInt(pixelsToTilesX(screenTop - this._y +
-        // screenHeight), 0, _mapHeight);
 
         // run all attached scripts
         for (JevaScript script : _scriptsList) {
@@ -426,18 +413,18 @@ public class JevaTileMap extends JevaClip {
         double screenWidth = viewportBounds.width;
         double screenTop = viewportBounds.y;
         double screenHeight = viewportBounds.height;
-        tileLeft = JevaUtils.clampInt(pixelsToTilesX(screenLeft - props._x), 0, _mapWidth);
-        tileRight = JevaUtils.clampInt(pixelsToTilesX(screenLeft - props._x + screenWidth) + 1, 0, _mapWidth);
-        tileTop = JevaUtils.clampInt(pixelsToTilesX(screenTop - props._y), 0, _mapHeight);
-        tileBottom = JevaUtils.clampInt(pixelsToTilesX(screenTop - props._y + screenHeight) + 1, 0, _mapHeight);
+        tileLeft = JevaUtils.clampInt(pixelsToTilesX(screenLeft), 0, _mapWidth);
+        tileRight = JevaUtils.clampInt(pixelsToTilesX(screenLeft + screenWidth) + 1, 0, _mapWidth);
+        tileTop = JevaUtils.clampInt(pixelsToTilesY(screenTop), 0, _mapHeight);
+        tileBottom = JevaUtils.clampInt(pixelsToTilesY(screenTop + screenHeight) + 1, 0, _mapHeight);
 
         Composite old = ctx.getComposite();
         ctx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, props._alpha));
 
         for (int y = tileTop; y < tileBottom; y++) {
             for (int x = tileLeft; x < tileRight; x++) {
-                int _x = JevaUtils.roundInt(props._x + tilesToPixelsX(x));
-                int _y = JevaUtils.roundInt(props._y + tilesToPixelsY(y));
+                int _x = tilesToPixelsX(x);
+                int _y = tilesToPixelsY(y);
                 try {
                     if (_tileMap[x][y].appearanceType == appearances.graphic) {
                         Image source = (Image) _tileMap[x][y].appearanceSource;
@@ -460,8 +447,8 @@ public class JevaTileMap extends JevaClip {
             ctx.setColor(Color.ORANGE);
             for (int y = tileTop; y < tileBottom; y++) {
                 for (int x = tileLeft; x < tileRight; x++) {
-                    int _x = JevaUtils.roundInt(props._x + tilesToPixelsX(x));
-                    int _y = JevaUtils.roundInt(props._y + tilesToPixelsY(y));
+                    int _x = tilesToPixelsX(x);
+                    int _y = tilesToPixelsY(y);
                     try {
                         ctx.setColor(Color.ORANGE);
                         ctx.drawRect(_x, _y, _width, _height);
@@ -504,11 +491,8 @@ public class JevaTileMap extends JevaClip {
         if (shouldRemove() || !props._visible)
             return false;
 
-        double applicableX = x - props._x;
-        double applicableY = y - props._y;
-
-        int xTile = pixelsToTilesX(applicableX);
-        int yTile = pixelsToTilesY(applicableY);
+        int xTile = pixelsToTilesX(x);
+        int yTile = pixelsToTilesY(y);
         if (xTile < 0 || xTile >= _mapWidth ||
                 yTile < 0 || yTile >= _mapHeight)
             return false;

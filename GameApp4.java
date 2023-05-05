@@ -152,10 +152,12 @@ public class GameApp4 {
             int snakeAnimationSize = 32;
             int batAnimationSize = 32;
             String playerSpriteSheet = "player_spritesheet";
-            
+
             jevar.createSpriteSheet("snake_baddie_animation", "snake_baddie_spritesheet", 4, snakeAnimationSize, 0, 8);
             jevar.createSpriteSheet("bat_baddie_fly_animation", "bat_baddie_spritesheet", 4, batAnimationSize, 0, 8);
-            jevar.createSpriteSheet("bat_baddie_die_animation", "bat_baddie_spritesheet", 4, batAnimationSize, 1, 8);
+            jevar.createSpriteSheet("bat_baddie_die_animation", "bat_baddie_spritesheet", 4, batAnimationSize, 1, 6);
+
+            jevar.createSpriteSheet("heart_animation", "heart_spritesheet", 4, 16, 0, 8);
 
             jevar.createSpriteSheet("char_idle_animation", playerSpriteSheet, 4, charAnimationSize, 0, 6);
             jevar.createSpriteSheet("char_jump_animation", playerSpriteSheet, 2, charAnimationSize, 1, 10);
@@ -356,7 +358,6 @@ public class GameApp4 {
                         return;
                     Rectangle2D.Double charBounds = (Rectangle2D.Double) mainChar.state.getState("rd_bounds");
                     if (charBounds != null && clip.hitTest(charBounds)) {
-                        // if (clip.hitTest(mainChar.props._x, mainChar.props._y)) {
                         clip.state.setBoolean("touchingPlayer", true);
                     } else
                         clip.state.setBoolean("touchingPlayer", false);
@@ -381,7 +382,7 @@ public class GameApp4 {
             jevar.createPrefab("heart_drop", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("drop");
-                loaded_clip.useGraphic("life_full");
+                loaded_clip.useSpriteSheet("heart_animation");
                 loaded_clip.state.setInt("score", 10);
                 loaded_clip.setDepth(collectibleDepth);
                 loaded_clip.addJevascript((self) -> {
@@ -707,10 +708,12 @@ public class GameApp4 {
                     JevaPrefab clip = (JevaPrefab) self;
 
                     clip.state.alterInt("offset", 1);
+                    if (clip.state.getInt("offset") > jevar.meta.getScreenWidth())
+                        clip.state.setInt("offset", 0);
 
                     if (jevar.currentClockMillis() - clip.state.getLong("updateWaveTime") > clip.state
                             .getInt("updateWaveInt")) {
-                                clip.state.setLong("updateWaveTime", jevar.currentClockMillis());
+                        clip.state.setLong("updateWaveTime", jevar.currentClockMillis());
                         @SuppressWarnings("unchecked")
                         ArrayList<WavePoint> wavePoints = (ArrayList<GameApp4.WavePoint>) clip.state
                                 .getState("wavePoints");
@@ -1566,19 +1569,19 @@ public class GameApp4 {
                         jevar.getSound("shoot_sfx").playOnce();
 
                         clip.useSpriteSheet(shootAnim, 1, (state, arg) -> {
-                            JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("projectile", clip.props._x,
-                                    clip.props._y - (clip.props._height), 40, 40);
-                            if (clip.props._scaleX > 0)
-                                projectile.state.setBoolean("goingRight", true);
-                            else
-                                projectile.state.setBoolean("goingLeft", true);
-
-                            clip.state.setBoolean("playerShooting", false);
 
                             clip.state.setBoolean("reserveAnim", false);
 
                             return null;
                         });
+                        JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("player_projectile", clip.props._x,
+                                clip.props._y - (clip.props._height), 40, 40);
+                        if (clip.props._scaleX > 0)
+                            projectile.state.setBoolean("goingRight", true);
+                        else
+                            projectile.state.setBoolean("goingLeft", true);
+
+                        clip.state.setBoolean("playerShooting", false);
                     }
 
                     if (!clip.state.getBoolean("isAlive")) {
@@ -1601,6 +1604,18 @@ public class GameApp4 {
                             if (breath < maxBreath)
                                 breath++;
                         }
+                    }
+
+                    Rectangle2D.Double charBounds = new Rectangle2D.Double(clip.props._x - (clip.props._width / 6),
+                            clip.props._y - clip.props._height * 2 / 3,
+                            clip.props._width / 3, clip.props._height / 3);
+                    clip.state.setState("rd_bounds", charBounds);
+
+                    JevaClip projectile = clip.hitTestGet("baddie_projectile");
+                    if (projectile != null && charBounds != null && clip.state.getBoolean("canGetHurt")
+                            && projectile.hitTest(charBounds)) {
+                        clip.state.setBoolean("gotHurt", true);
+                        projectile.remove();
                     }
 
                     clip.state.setLong("breathTime", breathTime);
@@ -1632,11 +1647,6 @@ public class GameApp4 {
                                         vcam.projection._height / 2;
                         }
                     }
-
-                    Rectangle2D.Double charBounds = new Rectangle2D.Double(clip.props._x - (clip.props._width / 6),
-                            clip.props._y - clip.props._height * 2 / 3,
-                            clip.props._width / 3, clip.props._height / 3);
-                    clip.state.setState("rd_bounds", charBounds);
 
                 });
             });
@@ -1676,8 +1686,8 @@ public class GameApp4 {
                             mainChar.state.setBoolean("gotHurt", true);
                         }
 
-                        JevaClip projectile = clip.hitTestGet("projectile");
-                        if (projectile != null) {
+                        JevaClip projectile = clip.hitTestGet("player_projectile");
+                        if (projectile != null && clip.state.getBoolean("canGetHurt")) {
                             clip.state.setBoolean("gotHurt", true);
                             projectile.remove();
                         }
@@ -1733,17 +1743,71 @@ public class GameApp4 {
                 loaded_clip.state.setInt("maxXSpeed", 60);
                 loaded_clip.useSpriteSheet("skele_walk_animation");
 
+                loaded_clip.state.setBoolean("seeingChar", false);
+                loaded_clip.state.setLong("shootTime", 0);
+                loaded_clip.state.setInt("shootWait", 1000);
+
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
+
+                final int sightDistance = 5;
 
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
+
+                    boolean seeingChar = clip.state.getBoolean("seeingChar");
+                    long shootTime = clip.state.getLong("shootTime");
+                    int shootWait = clip.state.getInt("shootWait");
 
                     if (!clip.state.getBoolean("isAlive")) {
                         clip.useSpriteSheet("skele_dead_animation", 1);
                         clip.state.setBoolean("goingLeft", false);
                         clip.state.setBoolean("goingRight", false);
                         clip.state.setBoolean("ds_isActive", false);
+                    } else {
+                        JevaTileMap map = (JevaTileMap) jevar.getJevaClip("worldMap");
+
+                        if (map != null && mainChar != null) {
+                            int myTileY = map.pixelsToTilesY(clip.props._y - clip.props._height / 2);
+                            int myTileX = map.pixelsToTilesX(clip.props._x);
+                            int charTileY = map.pixelsToTilesY(mainChar.props._y - mainChar.props._height / 2);
+                            int charTileX = map.pixelsToTilesX(mainChar.props._x);
+
+                            if (myTileY == charTileY) {
+
+                                int reach = myTileX + (int) (sightDistance * clip.props._scaleX);
+
+                                int rangeLeft = Math.min(reach, myTileX);
+                                int rangeRight = Math.max(reach, myTileX);
+
+                                if (charTileX >= rangeLeft && charTileX <= rangeRight) {
+                                    seeingChar = true;
+                                } else {
+                                    seeingChar = false;
+                                }
+                            } else {
+                                seeingChar = false;
+                            }
+
+                            if (seeingChar && jevar.currentClockMillis() - shootTime > shootWait
+                                    && Math.random() > 0.7) {
+                                shootTime = jevar.currentClockMillis();
+
+                                JevaScene currScene = jevar.getCurrentScene();
+
+                                JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("baddie_projectile",
+                                        clip.props._x,
+                                        clip.props._y - (clip.props._height), 40, 40);
+                                if (clip.props._scaleX > 0)
+                                    projectile.state.setBoolean("goingRight", true);
+                                else
+                                    projectile.state.setBoolean("goingLeft", true);
+                            }
+                        }
+
                     }
+
+                    clip.state.setBoolean("seeingChar", seeingChar);
+                    clip.state.setLong("shootTime", shootTime);
                 });
             });
 
@@ -1784,13 +1848,17 @@ public class GameApp4 {
                             mainChar.state.setBoolean("gotHurt", true);
                         }
 
-                        JevaClip projectile = clip.hitTestGet("projectile");
-                        if (projectile != null) {
+                        JevaClip projectile = clip.hitTestGet("player_projectile");
+                        if (projectile != null && clip.state.getBoolean("canGetHurt")) {
                             clip.state.setBoolean("gotHurt", true);
                             projectile.remove();
                         }
                     } else {
-                        clip.remove();
+                        goingLeft = false;
+                        goingRight = false;
+                        clip.state.setBoolean("usesGravity", true);
+                        clip.useSpriteSheet("bat_baddie_die_animation", 1);
+                        clip.state.setBoolean("ds_isActive", false);
                     }
 
                     clip.state.setBoolean("goingLeft", goingLeft);
@@ -1805,6 +1873,7 @@ public class GameApp4 {
                 loaded_clip.extend("ragdoll");
 
                 loaded_clip.state.setBoolean("usesGravity", false);
+                loaded_clip.state.setInt("maxXSpeed", 800);
                 loaded_clip.useGraphic("player_projectile");
                 loaded_clip.props.setAnchorY(0.5);
 
@@ -1819,40 +1888,20 @@ public class GameApp4 {
                 });
             });
 
-            jevar.createPrefab("player2", 100, 350, 100, 100, (loaded_self) -> {
+            jevar.createPrefab("player_projectile", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("projectile");
 
-                JevaVCam vcam = jevar.getVCam("myCam1");
-
-                loaded_clip.props.setAnchorX(0.5);
-                loaded_clip.props.setAnchorY(0.5);
-                loaded_clip.useGraphic("player2");
-
-                loaded_clip.addJevascript((self) -> {
-                    JevaPrefab clip = (JevaPrefab) self;
-                    double playerSpeed = 480 * jevar.getDelta();
-                    if (key.isDown("a")) {
-                        clip.props._x -= playerSpeed;
-                        if (clip.props._scaleX > 0)
-                            clip.props._scaleX *= -1;
-                    }
-                    if (key.isDown(JevaKey.D)) {
-                        clip.props._x += playerSpeed;
-                        if (clip.props._scaleX < 0)
-                            clip.props._scaleX *= -1;
-                    }
-                    if (key.isDown(JevaKey.W)) {
-                        clip.props._y -= playerSpeed;
-                    }
-                    if (key.isDown(JevaKey.S)) {
-                        clip.props._y += playerSpeed;
-                    }
-                    if (vcam != null) {
-                        vcam.projection._x = clip.props._x;
-                        vcam.projection._y = clip.props._y;
-                    }
-                });
+                loaded_clip.useGraphic("player_projectile");
             });
+
+            jevar.createPrefab("baddie_projectile", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("projectile");
+
+                loaded_clip.useGraphic("baddie_projectile");
+            });
+
             jevar.createPrefab("background", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
                     (loaded_self) -> {
                         JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
@@ -1867,7 +1916,6 @@ public class GameApp4 {
                         Image image4 = jevar.getImage("r_parallax_cave_4");
                         double imgW = image1.getWidth(null);
                         double imgH = image1.getHeight(null);
-                        // loaded_clip.useGraphic("background_cave");
 
                         loaded_clip.usePainting((ctx, x, y, w, h, state) -> {
                             if (vcam == null || map == null)
