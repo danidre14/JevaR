@@ -340,6 +340,27 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         fetchBufferStrategy();
     }
 
+    protected String _getCursorType() {
+        int type = getCursor().getType();
+
+        if (type == Cursor.HAND_CURSOR)
+            return "pointer";
+        // else if (type == Cursor.DEFAULT_CURSOR)
+        //     return "default";
+        else
+            return "default";
+    }
+
+    protected void _setCursorType(String value) {
+        if (value == "pointer" || value == "p") {
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            // } else if (value == "default" || value == "d") {
+            // setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        } else {
+            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+    }
+
     protected boolean isFullscreen() {
         return isFullScreen;
     }

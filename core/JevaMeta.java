@@ -41,4 +41,12 @@ public class JevaMeta {
     public int getScreenHeight() {
         return core.screen.getScreenHeight();
     }
+
+    public String getCursorType() {
+        return core.screen._getCursorType();
+    }
+
+    public void setCursor(String type) {
+        core.screen._setCursorType(type);
+    }
 }

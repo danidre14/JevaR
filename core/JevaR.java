@@ -910,6 +910,9 @@ public class JevaR implements Runnable {
     }
 
     private void tickEngine() {
+        // reset cursor
+        if(screen._getCursorType() != "default") screen._setCursorType("default");
+
         // run all attached scripts
         for (JevaScript script : jevascriptHierarchy.values()) {
             script.call(this);

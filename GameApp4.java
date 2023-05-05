@@ -63,19 +63,20 @@ public class GameApp4 {
             int overlayDepth = 10;
 
             jevar.createSound("underwater_ambience", 1).setVolume(0.5);
-            jevar.createSound("drop_water_splash", 5).setVolume(0.95);
-            jevar.createSound("step_splash_sfx", 5).setVolume(0.65);
-            jevar.createSound("step_sfx", 5).setVolume(1);
+            jevar.createSound("drop_water_splash", 3).setVolume(0.95);
+            jevar.createSound("step_splash_sfx", 3).setVolume(0.65);
+            jevar.createSound("step_sfx", 3).setVolume(1);
             jevar.createSound("open_chest_sfx", 3);
             jevar.createSound("chest_open_sfx", 3).setVolume(0.5);
             jevar.createSound("skele_walk_sfx");
             jevar.createSound("level_win_sfx").setVolume(0.7);
             jevar.createSound("skele_dead_sfx").setVolume(0.6);
-            jevar.createSound("jump_sfx", 5).setVolume(0.3);
-            jevar.createSound("shoot_sfx", 5).setVolume(0.6);
+            jevar.createSound("jump_sfx", 3).setVolume(0.3);
+            jevar.createSound("baddie_shoot_sfx", 3).setVolume(0.95);
+            jevar.createSound("player_shoot_sfx", 3).setVolume(0.6);
             jevar.createSound("coin_collect_sfx", 5).setVolume(0.9);
             jevar.createSound("skele_hit_sfx").setVolume(0.6);
-            jevar.createSound("baddie_dead_sfx", 5).setVolume(0.6);
+            jevar.createSound("baddie_dead_sfx", 3).setVolume(0.6);
             jevar.createSound("player_hit_sfx", 3).setVolume(0.9);
             jevar.createSound("game_over_sfx", 1).setVolume(0.7);
             jevar.createSound("baddie_hit_sfx", 5).setVolume(0.6);
@@ -96,6 +97,40 @@ public class GameApp4 {
             jevar.getSound("background_music").playLoop();
 
             String[][][] worldMap = {
+                    { { "300" },
+                            {
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "e       eeeeeeeeeeeeeeeee",
+                                "e       deeeeeeeeeeeeeeee",
+                                "e     ggeeeeeeeeeeeeeeeee",
+                                "e    ceeeeeeeeeeeeeeeeeee",
+                                "e   gge          e      e",
+                                "ec7 eee          e P0   e",
+                                "egg/eee  4       egggg  e",
+                                "e  l  eg/gg      eeeee  e",
+                                "eccl6ce l e   g         e",
+                                "egg/gge   e 3 e 2      1e",
+                                "eee|eee   egggeggggggggge",
+                                "e  l      eeeeeeeeeeeeeee",
+                                "e  l  5   eeeeeeeeeeeeeee",
+                                "egggggggggeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                                "eeeeeeeeeeeeeeeeeeeeeeeee",
+                        },
+                            {
+                                "Press 'D' or 'Right Arrow' to go right",
+                        "Press 'A' or 'Left Arrow' to go left",
+                        "Press 'W' or 'Up Arrow' to jump",
+                        "Hold the jump button to jump higher",
+                        "Hold 'S' or 'Down Arrow' to climb down ladders",
+                        "Hold up or down to climb up or down ladders",
+                        "Collect coins for score",
+                        "Proceed to the cave exit to get to a higher floor",
+                    } },
                     { { "60" }, {
                             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                             "b    l                        b",
@@ -104,14 +139,14 @@ public class GameApp4 {
                             "b    l          t             b",
                             "b    l         ggg      G     b",
                             "b    l       g/eeeg    gggggggb",
-                            "b         3  e|eeee           b",
+                            "b         2  e|eeee           b",
                             "b     ggggggge|eeeegg         b",
                             "b             l     B         b",
                             "b             l         5     b",
                             "bbbb          lS      bbbbb   b",
                             "b            ggggg          c b",
-                            "b     b    2geeeeegc       bbbb",
-                            "b P 1 b    geeeeeeegg         b",
+                            "b     b    1geeeeegc       bbbb",
+                            "b P 0 b    geeeeeeegg         b",
                             "bggggggg/ggeeeeeeeeeeggg  5 c b",
                             "beeeeeee|eeeeeeeeeeeeeeeggggggb",
                             "be      l              eeeeeeeb",
@@ -119,20 +154,20 @@ public class GameApp4 {
                             "beeeeee l     t              eb",
                             "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeb",
                             "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeb",
-                    } },
+                    }, { "Use wasd or arrows to move.", "Press the spacebar key to shoot.", "Climb out the cave to win!" } },
                     { { "60" }, {
                             "bbbbbbbbbbbbbbbbbbbbbb",
                             "b                    d",
                             "b         t       bbbb",
                             "b      P  b     B    b",
                             "b      b  b   bbb    b",
-                            "b 1    b  b          b",
+                            "b 0 1  b  b          b",
                             "bggggggggggggggggggggb",
                             "beeeeeeeeeeeeeeeeeeeeb",
                             "beeeeeeeeeeeeeeeeeeeeb",
                             "beeeeeeeeeeeeeeeeeeeeb",
                             "beeeeeeeeeeeeeeeeeeeeb",
-                    } }
+                    }, { "other sign 1" } }
             };
 
             jevar.createSpriteSheet("face_animation", (self) -> {
@@ -232,7 +267,18 @@ public class GameApp4 {
                 loaded_clip.setTileEnum('/', "ladder_grass", "ladder_floor");
                 loaded_clip.setTileEnum('|', "ladder_earth", "ladder_floor");
                 loaded_clip.setTileEnum(' ', "air", "air");
-                loaded_clip.setTileEnum('5', "decor_1", "air");
+                loaded_clip.setTileEnum('!', "decor_1", "air");
+
+                int infoLen = 0;
+                String[] infos = null;
+                if (worldMap[currLevel].length > 2) {
+                    infos = worldMap[currLevel][2];
+                    infoLen = infos.length;
+                }
+
+                for (int i = infoLen; i < 10; i++) {
+                    loaded_clip.setTileEnum((char) ('0' + i), "air", "air");
+                }
 
                 loaded_clip.loadMapFrom2DArray(worldMap[currLevel][1]);
 
@@ -244,18 +290,16 @@ public class GameApp4 {
                 loaded_clip.createClipAtTile('t', "treasure", collectibleDepth);
                 loaded_clip.createClipAtTile('d', "door", collectibleDepth);
 
-                loaded_clip.createClipAtTile('1', "info_sign", collectibleDepth, (info_loaded) -> {
-                    JevaPrefab info_clip = (JevaPrefab) info_loaded;
-                    info_clip.state.setString("info_key", "controls");
-                });
-                loaded_clip.createClipAtTile('2', "info_sign", collectibleDepth, (info_loaded) -> {
-                    JevaPrefab info_clip = (JevaPrefab) info_loaded;
-                    info_clip.state.setString("info_key", "shoot");
-                });
-                loaded_clip.createClipAtTile('3', "info_sign", collectibleDepth, (info_loaded) -> {
-                    JevaPrefab info_clip = (JevaPrefab) info_loaded;
-                    info_clip.state.setString("info_key", "goal");
-                });
+                if (infos != null) {
+                    for (int i = 0; i < infoLen; i++) {
+                        final String msg = infos[i];
+                        loaded_clip.createClipAtTile((char) ('0' + i), "info_sign", collectibleDepth, (info_loaded) -> {
+                            JevaPrefab info_clip = (JevaPrefab) info_loaded;
+
+                            info_clip.state.setString("info_message", msg);
+                        });
+                    }
+                }
             });
 
             jevar.createPrefab("hurtable", (loaded_self) -> {
@@ -759,9 +803,11 @@ public class GameApp4 {
                     }
 
                     ctx.setStroke(new BasicStroke(10));
-                    ctx.setColor(new Color(73, 154, 205, 120));
+                    ctx.setColor(new Color(123, 204, 255, 95));
+                    // ctx.setColor(new Color(73, 154, 205, 95));
                     ctx.fillPolygon(polyGon);
-                    ctx.setColor(new Color(138, 194, 226, 220));
+                    ctx.setColor(new Color(167, 223, 255, 155));
+                    // ctx.setColor(new Color(138, 194, 226, 155));
                     ctx.drawPolygon(polyGon);
                 });
 
@@ -890,11 +936,6 @@ public class GameApp4 {
                 loaded_clip.useGraphic("info_sign");
             });
 
-            HashMap<String, String> infoList = new HashMap<>();
-            infoList.put("goal", "Climb out the cave to win!");
-            infoList.put("controls", "Use wasd or arrows to move.");
-            infoList.put("shoot", "Press the spacebar key to shoot.");
-
             jevar.createJevascript("updateScreenDimensions", (self) -> {
                 JevaClip clip = (JevaClip) self;
                 clip.props._width = jevar.meta.getScreenWidth();
@@ -916,7 +957,7 @@ public class GameApp4 {
                         infoText.props.setFontSize(40);
                         infoText.props.setAnchorX(0);
                         infoText.props.setAnchorY(0);
-                        infoText.props._backgroundColor = new Color(50, 22, 22, 50);
+                        infoText.props._backgroundColor = new Color(30, 22, 22, 70);
 
                         loaded_clip.addJevascript((self) -> {
                             JevaPrefab clip = (JevaPrefab) self;
@@ -934,8 +975,8 @@ public class GameApp4 {
                             if (infoSign == null) {
                                 clip.props._visible = false;
                             } else {
-                                String infoKey = infoSign.state.getString("info_key", "goal");
-                                infoText.props._text = "Note: " + infoList.get(infoKey);
+                                String note = infoSign.state.getString("info_message");
+                                infoText.props._text = "Note: " + note;
                                 clip.props._visible = true;
                             }
                         });
@@ -1474,8 +1515,8 @@ public class GameApp4 {
                 loaded_clip.setInstanceName("mainChar");
                 JevaVCam vcam = jevar.getVCam("mainCamera");
 
-                loaded_clip.props._scaleX = 1.5;
-                loaded_clip.props._scaleY = 1.5;
+                loaded_clip.props._scaleX = 1.35;
+                loaded_clip.props._scaleY = 1.35;
 
                 loaded_clip.state.setBoolean("canSwim", true);
                 loaded_clip.state.setInt("hurtingWait", 600);
@@ -1486,7 +1527,7 @@ public class GameApp4 {
                 loaded_clip.state.setBoolean("wonGame", false);
                 loaded_clip.state.setBoolean("isUnderwater", false);
 
-                loaded_clip.state.setInt("breathWait", 1500);
+                loaded_clip.state.setInt("breathWait", 500);
                 loaded_clip.state.setLong("breathTime", 0);
 
                 loaded_clip.state.setString("hb_diedSound", "game_over_sfx");
@@ -1566,12 +1607,10 @@ public class GameApp4 {
 
                         clip.state.setBoolean("playerShooting", true);
                         clip.state.setBoolean("reserveAnim", true);
-                        jevar.getSound("shoot_sfx").playOnce();
+                        jevar.getSound("player_shoot_sfx").playOnce();
 
                         clip.useSpriteSheet(shootAnim, 1, (state, arg) -> {
-
                             clip.state.setBoolean("reserveAnim", false);
-
                             return null;
                         });
                         JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("player_projectile", clip.props._x,
@@ -1794,9 +1833,10 @@ public class GameApp4 {
 
                                 JevaScene currScene = jevar.getCurrentScene();
 
+                                jevar.getSound("baddie_shoot_sfx").playOnce();
+
                                 JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("baddie_projectile",
-                                        clip.props._x,
-                                        clip.props._y - (clip.props._height), 40, 40);
+                                        clip.props._x, clip.props._y - (clip.props._height), 40, 40);
                                 if (clip.props._scaleX > 0)
                                     projectile.state.setBoolean("goingRight", true);
                                 else
@@ -2015,7 +2055,13 @@ public class GameApp4 {
                 loaded_clip.props._width = (int) loaded_clip.props._height * 20 / 6;
                 loaded_clip.props.setFontSize((int) loaded_clip.props._height * 5 / 6);
 
-                loaded_clip.props._backgroundColor = Color.GREEN;
+                loaded_clip.props._fontColor = new Color(48, 31, 36);
+                loaded_clip.props._backgroundColor = new Color(88, 75, 84);
+                loaded_clip.props._borderColor = new Color(61, 48, 53);
+                // loaded_clip.props._fontColor = new Color(68, 55, 64);
+                // loaded_clip.props._backgroundColor = new Color(48, 31, 36);
+                // loaded_clip.props._borderColor = new Color(61, 48, 53);
+                loaded_clip.props._borderSize = 10;
 
                 loaded_clip.props.setAnchorX(0.5);
                 loaded_clip.props.setAnchorY(0.5);
@@ -2037,6 +2083,7 @@ public class GameApp4 {
                         loaded_clip.props._height = height;
                         loaded_clip.props._width = (int) height * 20 / 6;
                         loaded_clip.props.setFontSize((int) height * 5 / 6);
+                        jevar.meta.setCursor("p");
                     } else {
                         double height = clip.state.getDouble("initialWidth");
                         justRolledOver = false;
@@ -2112,6 +2159,8 @@ public class GameApp4 {
                         if (clip.state.getBoolean("isClicked")) {
                             jevar.execFunc("newGame");
                         }
+
+                        clip.props._y = 350.0 / initHeight * jevar.meta.getScreenHeight();
                     });
                 });
                 scene.addText("button", (t) -> {
@@ -2119,7 +2168,7 @@ public class GameApp4 {
 
                     loaded_text.props._text = "EXIT";
                     loaded_text.props._x = jevar.meta.getScreenWidth() / 2;
-                    loaded_text.props._y = 500;
+                    loaded_text.props._y = 550;
 
                     loaded_text.addJevascript((self) -> {
                         JevaText clip = (JevaText) self;
@@ -2127,6 +2176,8 @@ public class GameApp4 {
                         if (clip.state.getBoolean("isClicked")) {
                             jevar.meta.closeApplication();
                         }
+
+                        clip.props._y = 550.0 / initHeight * jevar.meta.getScreenHeight();
                     });
                 });
 

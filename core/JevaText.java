@@ -112,6 +112,9 @@ public class JevaText extends JevaClip {
 
         pCtx.setColor(props._backgroundColor);
         pCtx.fill(body);
+        pCtx.setStroke(new BasicStroke(props._borderSize));
+        pCtx.setColor(props._borderColor);
+        pCtx.draw(body);
 
         pCtx.setColor(props._fontColor);
         // pCtx.setFont(new Font(pCtx.getFont().getFontName(), Font.PLAIN, _height));
