@@ -104,12 +104,14 @@ public class GameApp4 {
                 String name;
                 int level;
                 int score;
+                long duration;
                 String id;
 
-                public HighScore(String name, int level, int score) {
+                public HighScore(String name, int level, int score, long duration) {
                     this.name = name;
                     this.level = level;
                     this.score = score;
+                    this.duration = duration;
                     this.id = JevaUtils.generateUUID();
                 }
             }
@@ -119,13 +121,14 @@ public class GameApp4 {
             for (int i = 0; i < maxHighScores; i++) {
                 String _name = so.getItem("highscore_" + i + "_name");
                 if (_name == null) {
-                    HighScore highScore = new HighScore(nameLessScore, 0, 0);
+                    HighScore highScore = new HighScore(nameLessScore, 0, 0, 0);
                     highScores[i] = highScore;
                 } else {
                     int _level = Integer.parseInt(so.getItem("highscore_" + i + "_level"));
                     int _score = Integer.parseInt(so.getItem("highscore_" + i + "_score"));
+                    long _duration = Long.parseLong(so.getItem("highscore_" + i + "_duration"));
 
-                    HighScore highScore = new HighScore(_name, _level, _score);
+                    HighScore highScore = new HighScore(_name, _level, _score, _duration);
                     highScores[i] = highScore;
                     currHighScores++;
                 }
@@ -134,8 +137,10 @@ public class GameApp4 {
             jevar.createFunc("calcHighScores", (state, arg) -> {
                 ArrayList<HighScore> tempHighScores = new ArrayList<>(Arrays.asList(highScores));
 
+                long timeTaken = jevar.currentClockMillis() - jevar.state.getLong("timeStartedGame");
+
                 HighScore currentScore = new HighScore(jevar.state.getString("playerName"),
-                        jevar.state.getInt("currLevel"), jevar.state.getInt("score"));
+                        jevar.state.getInt("currLevel"), jevar.state.getInt("score"), timeTaken);
 
                 jevar.state.setState("currHighschore", currentScore);
 
@@ -157,17 +162,19 @@ public class GameApp4 {
                     so.setItem("highscore_" + i + "_name", highScores[i].name);
                     so.setItem("highscore_" + i + "_level", highScores[i].level);
                     so.setItem("highscore_" + i + "_score", highScores[i].score);
+                    so.setItem("highscore_" + i + "_duration", highScores[i].duration);
                 }
 
                 return null;
             });
             jevar.createFunc("resetHighScores", (state, arg) -> {
-                HighScore clearScore = new HighScore(nameLessScore, 0, 0);
+                HighScore clearScore = new HighScore(nameLessScore, 0, 0, 0);
                 for (int i = 0; i < maxHighScores; i++) {
                     highScores[i] = clearScore;
                     so.setItem("highscore_" + i + "_name", nameLessScore);
                     so.setItem("highscore_" + i + "_level", 0);
                     so.setItem("highscore_" + i + "_score", 0);
+                    so.setItem("highscore_" + i + "_duration", 0);
                 }
 
                 return null;
@@ -595,7 +602,7 @@ public class GameApp4 {
                     boolean wasOpened = clip.state.getBoolean("wasOpened");
                     if (!wasOpened && clip.state.getBoolean("touchingPlayer")) {
                         jevar.execFunc("baddie_drop_item", "coin_drop", clip.props, 50, 2);
-                        jevar.execFunc("baddie_drop_item", "heart_drop", clip.props);
+                        jevar.execFunc("baddie_drop_item", "heart_drop", clip.props, 3);
 
                         wasOpened = true;
                         clip.useGraphic("chest_open");
@@ -1017,8 +1024,8 @@ public class GameApp4 {
             });
 
             jevar.createFunc("newGame", (state, arg) -> {
-                state.setInt("currLevel", 2);
-
+                state.setInt("currLevel", 0);
+                state.setLong("timeStartedGame", jevar.currentClockMillis());
                 state.setInt("score", 0);
                 state.setInt("health", state.getInt("maxHealth"));
                 jevar.useScene("gameScene", true);
@@ -1990,9 +1997,12 @@ public class GameApp4 {
                             currScene.addPrefab("coin_drop", xPos, yPos).state.setInt("scoreIncrease", scoreIncrease);
                         }
                     } else if (itemType == "heart_drop") {
-                        double xPos = JevaUtils.randomDouble(leftBound, rightBound);
-                        double yPos = JevaUtils.randomDouble(topBound, bottomBound);
-                        currScene.addPrefab("heart_drop", xPos, yPos);
+                        int amt = JevaUtils.randomInt((arg.length > 2 && arg[2] != null) ? (int) arg[3] : 1);
+                        for (int i = 0; i < amt; i++) {
+                            double xPos = JevaUtils.randomDouble(leftBound, rightBound);
+                            double yPos = JevaUtils.randomDouble(topBound, bottomBound);
+                            currScene.addPrefab("heart_drop", xPos, yPos);
+                        }
                     }
 
                     return null;
@@ -2432,7 +2442,7 @@ public class GameApp4 {
                     loaded_clip.useGraphic("background_cave");
                 });
 
-                final int scoreW = 500;
+                final int scoreW = 750;
                 final int lineH = 30;
 
                 HighScore curScore = (HighScore) jevar.state.getState("currHighschore");
@@ -2441,19 +2451,19 @@ public class GameApp4 {
                     for (int i = 0; i < maxHighScores; i++) {
                         if (highScores[i].id == curScore.id) {
                             final int index = i;
-                            scene.addText("", jevar.meta.getScreenWidth() / 2 - 10,
+                            scene.addText("", jevar.meta.getScreenWidth() / 2,
                                     250 + (lineH * 2) * (index + 1) - 10, scoreW + 20, lineH + 30, (t) -> {
                                         JevaText loaded_text = (JevaText) t;
                                         loaded_text.props.setAnchorX(0.5);
                                         loaded_text.setDepth(2);
                                         loaded_text.state.setDouble("defY", 250);
 
-                                        loaded_text.props._backgroundColor = new Color(234, 154, 3, 150);
+                                        loaded_text.props._backgroundColor = new Color(234, 154, 9, 130);
 
                                         loaded_text.addJevascript((self) -> {
                                             JevaText clip = (JevaText) self;
 
-                                            clip.props._x = jevar.meta.getScreenWidth() / 2 - 10;
+                                            clip.props._x = jevar.meta.getScreenWidth() / 2;
                                             clip.props._y = (loaded_text.state.getDouble("defY") / initHeight
                                                     * jevar.meta.getScreenHeight()) + (lineH * 2) * (index + 1) - 10;
                                         });
@@ -2478,7 +2488,7 @@ public class GameApp4 {
                         });
 
                 scene.addText("Name",
-                        jevar.meta.getScreenWidth() / 2, 250, 300, 350, (t) -> {
+                        jevar.meta.getScreenWidth() / 2, 250, 380, 350, (t) -> {
                             JevaText loaded_text = (JevaText) t;
 
                             loaded_text.props.setFontSize(lineH);
@@ -2503,15 +2513,16 @@ public class GameApp4 {
                             });
                         });
                 scene.addText("Level",
-                        jevar.meta.getScreenWidth() / 2, 250, 100, 350, (t) -> {
+                        jevar.meta.getScreenWidth() / 2, 250, 90, 350, (t) -> {
                             JevaText loaded_text = (JevaText) t;
 
                             loaded_text.props.setFontSize(lineH);
+                            loaded_text.props.setAlign("r");
                             loaded_text.state.setDouble("defY", loaded_text.props._y);
 
                             String scoreText = "Level\n\n";
 
-                            int offset = 300;
+                            int offset = 380;
 
                             for (int i = 0; i < maxHighScores; i++) {
                                 scoreText += ((highScores[i].name.equals(nameLessScore)) ? "- - -"
@@ -2528,19 +2539,46 @@ public class GameApp4 {
                             });
                         });
                 scene.addText("Score",
-                        jevar.meta.getScreenWidth() / 2, 250, 100, 350, (t) -> {
+                        jevar.meta.getScreenWidth() / 2, 250, 150, 350, (t) -> {
                             JevaText loaded_text = (JevaText) t;
 
                             loaded_text.props.setFontSize(lineH);
+                            loaded_text.props.setAlign("r");
                             loaded_text.state.setDouble("defY", loaded_text.props._y);
 
                             String scoreText = "Score\n\n";
 
-                            int offset = 400;
+                            int offset = 470;
 
                             for (int i = 0; i < maxHighScores; i++) {
                                 scoreText += ((highScores[i].name.equals(nameLessScore)) ? "- - -"
                                         : highScores[i].score) + "\n\n";
+                            }
+                            loaded_text.props._text = scoreText;
+
+                            loaded_text.addJevascript((self) -> {
+                                JevaText clip = (JevaText) self;
+
+                                clip.props._x = jevar.meta.getScreenWidth() / 2 - scoreW / 2 + offset;
+                                clip.props._y = loaded_text.state.getDouble("defY") / initHeight
+                                        * jevar.meta.getScreenHeight();
+                            });
+                        });
+                scene.addText("Time",
+                        jevar.meta.getScreenWidth() / 2, 250, 130, 350, (t) -> {
+                            JevaText loaded_text = (JevaText) t;
+
+                            loaded_text.props.setFontSize(lineH);
+                            loaded_text.props.setAlign("r");
+                            loaded_text.state.setDouble("defY", loaded_text.props._y);
+
+                            String scoreText = "Time\n\n";
+
+                            int offset = 620;
+
+                            for (int i = 0; i < maxHighScores; i++) {
+                                scoreText += ((highScores[i].name.equals(nameLessScore)) ? "- -:- -:- -"
+                                        : highScores[i].duration) + "\n\n";
                             }
                             loaded_text.props._text = scoreText;
 
@@ -2749,9 +2787,9 @@ public class GameApp4 {
                     if (key.isReleased("Q")) {
                         meta.closeApplication();
                     }
-                    if (key.isReleased("R")) {
-                        core.resetScene();
-                    }
+                    // if (key.isReleased("R")) {
+                    // core.resetScene();
+                    // }
                     if (key.isPressed(JevaKey.Z)) {
                         jevar.debugMode = !jevar.debugMode;
                     }
