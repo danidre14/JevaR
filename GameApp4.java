@@ -282,7 +282,7 @@ public class GameApp4 {
                                     "eeeeeeeeeeeeeeeeeeeeeeeeee",
                                     "e c c c eeeeeeeeeeeeeeeeee",
                                     "ec c c cdeeeeeeeeeeeeeeeee",
-                                    "eg/ggggggeeeeeeeeeeeeeeeee",
+                                    "eg/gggggeeeeeeeeeeeeeeeeee",
                                     "ee|eeeeeeeeeeeeeeeeeeeeeee",
                                     "e l                      e",
                                     "e l                      e",
@@ -312,6 +312,27 @@ public class GameApp4 {
                                     "Skeletons are most dangerous! They shoot arrows!",
                                     "You've found treasure! Well done!",
                             } },
+                    { { "120" }, {
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "ec c c c c c c c c c c ceeeeeee",
+                            "e c c c c c c c c c c c deeeeee",
+                            "eg/gggggggggggeeeeeeeeeeeeeeeee",
+                            "e l                           e",
+                            "e l                           e",
+                            "eSl               G           e",
+                            "eggggggggg  bb  ggggggg       e",
+                            "e               eeeeeeeggggg/ge",
+                            "eB              b           lBe",
+                            "e                           l e",
+                            "e          0                l e",
+                            "e       gggggggggggggggggggg/ge",
+                            "e       eeeeeeeeeeeeeeeeeeee|ee",
+                            "e              eeeeeeeeee   l e",
+                            "e   gg         eeeeeeeeee     e",
+                            "e  cee     P   eeeeeeeeee t   e",
+                            "e c ee  gggggggeeeeeeeeeebbb  e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    }, { "Good luck!" } },
                     { { "60" }, {
                             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                             "b    l                        b",
@@ -1041,7 +1062,7 @@ public class GameApp4 {
             });
 
             jevar.createFunc("newGame", (state, arg) -> {
-                state.setInt("currLevel", 0);
+                state.setInt("currLevel", 3);
                 state.setLong("timeStartedGame", jevar.currentClockMillis());
                 state.setInt("score", 0);
                 state.setInt("health", state.getInt("maxHealth"));

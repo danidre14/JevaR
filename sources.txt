@@ -1,10 +1,10 @@
 Sounds:
-YouTube.com
-Pixabay.com
-QuickSounds.com
-mixkit.co
+https://www.youtube.com/
+https://pixabay.com/
+https://quicksounds.com/
+https://mixkit.co/
 https://www.cutyt.com/
-Bfxr
+https://www.bfxr.net/
 
 Assets:
 https://onlinepngtools.com/refine-png-edges
