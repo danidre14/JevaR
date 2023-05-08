@@ -62,7 +62,7 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         // setLocationRelativeTo(null);
         // pack();
         // setVisible(true);
-        
+
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent ev) {
                 core.shutdownEngine();
@@ -156,17 +156,24 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         int code = e.getKeyCode();
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
-
+        char keyChar = (char) code;
 
         if (key._keysList.get(keyCode) == JevaKey._keyStates.nil || key._keysList.get(keyCode) == null)
             key._keysList.put(keyCode, JevaKey._keyStates.down);
         if (key._keysList.get(keyName) == JevaKey._keyStates.nil || key._keysList.get(keyName) == null)
             key._keysList.put(keyName, JevaKey._keyStates.down);
 
-        if (key._keysPressed.get(keyCode) == JevaKey._keyStates.nil || key._keysPressed.get(keyCode) == null)
+        if (key._keysPressed.get(keyCode) == JevaKey._keyStates.nil || key._keysPressed.get(keyCode) == null) {
             key._keysPressed.put(keyCode, JevaKey._keyStates.down);
-        if (key._keysPressed.get(keyName) == JevaKey._keyStates.nil || key._keysPressed.get(keyName) == null)
+        }
+        if (key._keysPressed.get(keyName) == JevaKey._keyStates.nil || key._keysPressed.get(keyName) == null) {
             key._keysPressed.put(keyName, JevaKey._keyStates.down);
+        }
+
+        if (key._keysPressed.get(keyCode) == JevaKey._keyStates.down
+                || key._keysPressed.get(keyName) == JevaKey._keyStates.down) {
+            setLastKey(keyChar);
+        }
     }
 
     public void keyReleased(KeyEvent e) {
@@ -174,7 +181,6 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
         int code = e.getKeyCode();
         String keyCode = "code_" + code;
         String keyName = "name_" + KeyEvent.getKeyText(code).toLowerCase();
-        char keyChar = (char) code;
 
         // System.out.println("Key being pressed- Code: " + keyCode + " Name: " +
         // keyName + " Char: '" + ((char) code) + "'");
@@ -199,14 +205,14 @@ public class JevaScreen extends JFrame implements KeyListener, MouseListener, Mo
                     && (key._keysReleased.get(keyName) == JevaKey._keyStates.nil
                             || key._keysReleased.get(keyName) == null)) {
                 key._keysReleased.put(keyName, JevaKey._keyStates.down);
-                setLastKey(keyChar);
             }
             key._keysPressed.put(keyName, JevaKey._keyStates.nil);
         }
     }
 
     private void setLastKey(char letter) {
-        if((letter >= '0' && letter <= '9') || (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z') || letter == ' ') {
+        if ((letter >= '0' && letter <= '9') || (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z')
+                || letter == ' ') {
             core.key.lastKeyReleased = letter;
         }
     }

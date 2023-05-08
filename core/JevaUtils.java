@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class JevaUtils {
     protected static JevaScript emptyScript = (self) -> {
@@ -20,6 +21,15 @@ public class JevaUtils {
         String uuidAsString = uuid.toString();
 
         return uuidAsString;
+    }
+
+    public static String msToTime(long millis) {
+        return String.format("%02d:%02d:%02d",
+                TimeUnit.MILLISECONDS.toHours(millis),
+                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
     }
 
     public static double lerp(double prev, double curr, double alpha) {
@@ -115,14 +125,15 @@ public class JevaUtils {
         return new Color(0, 0, 0);
     }
 
-    protected static LinkedHashMap<String, JevaClip> mergeClipContainers(LinkedHashMap<String, JevaClip> clipMap1, LinkedHashMap<String, JevaClip> clipMap2) {
+    protected static LinkedHashMap<String, JevaClip> mergeClipContainers(LinkedHashMap<String, JevaClip> clipMap1,
+            LinkedHashMap<String, JevaClip> clipMap2) {
         LinkedHashMap<String, JevaClip> tempClipHierarchy = new LinkedHashMap<>(clipMap1);
-        
+
         tempClipHierarchy.putAll(clipMap2);
 
         return tempClipHierarchy;
     }
-    
+
     protected static LinkedHashMap<String, JevaClip> sortClipsByDepth(LinkedHashMap<String, JevaClip> clipHierarchy) {
         // 1. create temp LinkedHashMap
         LinkedHashMap<String, JevaClip> tempClipHierarchy = new LinkedHashMap<>(clipHierarchy);

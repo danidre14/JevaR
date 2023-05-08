@@ -150,7 +150,11 @@ public class GameApp4 {
                     @Override
                     public int compare(HighScore a, HighScore b) {
                         if (a.level == b.level) {
-                            return b.score - a.score;
+                            if (a.score == b.score) {
+                                return (int) ((a.duration - b.duration) / 1000);
+                            } else {
+                                return b.score - a.score;
+                            }
                         } else {
                             return b.level - a.level;
                         }
@@ -382,6 +386,19 @@ public class GameApp4 {
                 spritesheet.addFrame("coin_anim_6", duration);
             });
 
+            jevar.createFunc("winGame", (state, arg) -> {
+                jevar.execFunc("calcHighScores");
+                jevar.state.setString("scoresSceneTitle", "YOU WIN!");
+                jevar.useScene("highscoresScene", true);
+                return null;
+            });
+            jevar.createFunc("loseGame", (state, arg) -> {
+                jevar.execFunc("calcHighScores");
+                jevar.state.setString("scoresSceneTitle", "GAME OVER");
+                jevar.useScene("highscoresScene", true);
+                return null;
+            });
+
             jevar.createSpriteSheet("skele_walk_animation", "skele_spritesheet", 6, baddieAnimationSize, 0, 10);
             jevar.createSpriteSheet("skele_dead_animation", "skele_spritesheet", 7, baddieAnimationSize, 1, 10);
 
@@ -392,7 +409,7 @@ public class GameApp4 {
                 int currLevel = jevar.state.getInt("currLevel", 0);
 
                 if (currLevel >= worldMap.length) {
-                    jevar.useScene("highscoresScene", true);
+                    jevar.execFunc("winGame");
                     return;
                 }
 
@@ -1036,13 +1053,15 @@ public class GameApp4 {
             jevar.createFunc("nextLevel", (state, arg) -> {
                 jevar.setTimeScale(1);
                 int currLevel = state.getInt("currLevel");
+                currLevel++;
+                state.setInt("currLevel", currLevel);
 
                 if (currLevel < worldMap.length) {
-                    currLevel++;
-                    state.setInt("currLevel", currLevel);
                     jevar.useScene("gameScene", true);
                 } else {
-                    jevar.useScene("highscoresScene", true);
+                    currLevel--;
+                    state.setInt("currLevel", currLevel);
+                    jevar.execFunc("winGame");
                 }
 
                 return null;
@@ -1076,6 +1095,70 @@ public class GameApp4 {
                 JevaClip clip = (JevaClip) self;
                 clip.props._width = jevar.meta.getScreenWidth();
                 clip.props._height = jevar.meta.getScreenHeight();
+            });
+
+            jevar.createPrefab("muteIcon", (c) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) c;
+
+                loaded_clip.props.setAnchorX(1);
+                loaded_clip.props.setAnchorY(1);
+
+                loaded_clip.props._x = jevar.meta.getScreenWidth() - 40;
+                loaded_clip.props._y = jevar.meta.getScreenHeight() - 40;
+                loaded_clip.props._width = 40;
+                loaded_clip.props._height = 40;
+
+                loaded_clip.state.setBoolean("justRolledOver", false);
+
+                loaded_clip.addJevascript((cc) -> {
+                    JevaPrefab clip = (JevaPrefab) cc;
+                    clip.state.setBoolean("isClicked", false);
+
+                    boolean justRolledOver = clip.state.getBoolean("justRolledOver");
+
+                    if (JevaSound.getMasterVolume() == 0)
+                        clip.useGraphic("muteOn");
+                    else
+                        clip.useGraphic("muteOff");
+
+                    if (clip.props.isHovered()) {
+                        if (!justRolledOver) {
+                            jevar.getSound("button_hover_sfx").playOnce();
+                        }
+                        justRolledOver = true;
+                        jevar.meta.setCursor("p");
+                    } else {
+                        justRolledOver = false;
+                    }
+                    loaded_clip.state.setBoolean("justRolledOver", justRolledOver);
+
+                    if (jevar.mouse.isPressed(JevaMouse.LEFT) && clip.props.isHovered()) {
+                        clip.state.setBoolean("pressed", true);
+                    }
+                    if (jevar.mouse.isReleased(JevaMouse.LEFT) && clip.state.getBoolean("pressed")) {
+                        if (clip.props.isHovered()) {
+                            clip.state.setBoolean("isClicked", true);
+                            jevar.getSound("button_press_sfx").playOnce();
+                        }
+                        clip.state.setBoolean("pressed", false);
+                    }
+
+                    if (clip.state.getBoolean("isClicked")) {
+                        if (JevaSound.getMasterVolume() == 1)
+                            JevaSound.setMasterVolume(0);
+                        else
+                            JevaSound.setMasterVolume(1);
+                    }
+
+                    JevaVCam vcam = jevar.getVCam("mainCamera");
+                    if (vcam != null) {
+                        clip.props._x = (vcam.projection._x + vcam.projection._width / 2) - 10;
+                        clip.props._y = (vcam.projection._y + vcam.projection._height / 2) - 10;
+                    } else {
+                        clip.props._x = jevar.meta.getScreenWidth() - 40;
+                        clip.props._y = jevar.meta.getScreenHeight() - 40;
+                    }
+                });
             });
 
             jevar.createPrefab("info_manager", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
@@ -1120,20 +1203,20 @@ public class GameApp4 {
 
             jevar.createPrefab("overlay", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
                     (loaded_self) -> {
-                        JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
-                        loaded_clip.setDepth(overlayDepth);
+                        JevaPrefab overlay_clip = (JevaPrefab) loaded_self;
+                        overlay_clip.setDepth(overlayDepth);
 
-                        loaded_clip.addJevascript("updateScreenDimensions");
+                        overlay_clip.addJevascript("updateScreenDimensions");
 
                         JevaVCam vcam = jevar.getVCam("mainCamera");
 
-                        loaded_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
+                        overlay_clip.usePainting((ctx, _x, _y, _width, _height, state) -> {
                             ctx.setColor(new Color(0, 0, 0, 120));
                             ctx.fillRect(0, jevar.meta.getScreenHeight() - 50, 560, 50);
                             ctx.fillRect(jevar.meta.getScreenWidth() - 560, jevar.meta.getScreenHeight() - 50, 560, 50);
                         });
 
-                        loaded_clip.addText("Health: ", 10, jevar.meta.getScreenHeight() - 50, 150, 50, (ht_tx) -> {
+                        overlay_clip.addText("Health: ", 10, jevar.meta.getScreenHeight() - 50, 150, 50, (ht_tx) -> {
                             JevaText ht_cp = (JevaText) ht_tx;
 
                             ht_cp.addJevascript((score_clip_script) -> {
@@ -1141,7 +1224,7 @@ public class GameApp4 {
                             });
                         });
 
-                        loaded_clip.addText("Level: 0", jevar.meta.getScreenWidth() - 550,
+                        overlay_clip.addText("Level: 0", jevar.meta.getScreenWidth() - 550,
                                 jevar.meta.getScreenHeight() - 50, 200, 50, (loaded_score) -> {
                                     JevaText score_clip = (JevaText) loaded_score;
 
@@ -1151,29 +1234,45 @@ public class GameApp4 {
                                         score_clip.props._text = "Level: " + (jevar.state.getInt("currLevel") + 1);
                                     });
                                 });
-                        loaded_clip.addPrefab(jevar.meta.getScreenWidth() - 350, jevar.meta.getScreenHeight() - 50, 60,
-                                60, (cgc) -> {
+                        overlay_clip.addPrefab(jevar.meta.getScreenWidth() - 390, jevar.meta.getScreenHeight() - 50, 50,
+                                50, (cgc) -> {
                                     JevaPrefab coin_graphic_clip = (JevaPrefab) cgc;
 
                                     coin_graphic_clip.addJevascript((clp) -> {
-                                        coin_graphic_clip.props._x = jevar.meta.getScreenWidth() - 350;
+                                        coin_graphic_clip.props._x = jevar.meta.getScreenWidth() - 390;
                                         coin_graphic_clip.props._y = jevar.meta.getScreenHeight() - 50;
                                     });
 
                                     coin_graphic_clip.useSpriteSheet("coin_animation");
                                 });
-                        loaded_clip.addText("0", jevar.meta.getScreenWidth() - 290, jevar.meta.getScreenHeight() - 50,
+                        overlay_clip.addText("0", jevar.meta.getScreenWidth() - 350, jevar.meta.getScreenHeight() - 50,
                                 300, 50, (loaded_score) -> {
                                     JevaText score_clip = (JevaText) loaded_score;
 
                                     score_clip.addJevascript((score_clip_script) -> {
-                                        score_clip.props._x = jevar.meta.getScreenWidth() - 290;
+                                        score_clip.props._x = jevar.meta.getScreenWidth() - 350;
                                         score_clip.props._y = jevar.meta.getScreenHeight() - 50;
                                         score_clip.props._text = "" + jevar.state.getInt("score");
                                     });
                                 });
+                        overlay_clip.addText("HH:MM:SS", jevar.meta.getScreenWidth() - 70, jevar.meta.getScreenHeight(),
+                                300, 50, (loaded_time) -> {
+                                    JevaText time_clip = (JevaText) loaded_time;
+                                    time_clip.props.setAnchorX(1);
+                                    time_clip.props.setAnchorY(1);
+                                    time_clip.props.setAlign("r");
 
-                        loaded_clip.addPrefab(150, jevar.meta.getScreenHeight() - 50, 400, 50, (l) -> {
+                                    time_clip.addJevascript((score_clip_script) -> {
+
+                                        long timeTaken = jevar.currentClockMillis()
+                                                - jevar.state.getLong("timeStartedGame");
+                                        time_clip.props._x = jevar.meta.getScreenWidth() - 70;
+                                        time_clip.props._y = jevar.meta.getScreenHeight();
+                                        time_clip.props._text = JevaUtils.msToTime(timeTaken);
+                                    });
+                                });
+
+                        overlay_clip.addPrefab(150, jevar.meta.getScreenHeight() - 50, 400, 50, (l) -> {
                             JevaPrefab health_clip = (JevaPrefab) l;
 
                             Image heartFullImg = jevar.getImage("life_full");
@@ -1201,7 +1300,7 @@ public class GameApp4 {
                                 health_clip.props._y = jevar.meta.getScreenHeight() - 50;
                             });
                         });
-                        loaded_clip.addPrefab(150, jevar.meta.getScreenHeight() - 100, 410, 50, (l) -> {
+                        overlay_clip.addPrefab(150, jevar.meta.getScreenHeight() - 100, 410, 50, (l) -> {
                             JevaPrefab breath_clip = (JevaPrefab) l;
 
                             breath_clip.props.shiftAnchorX(0.5);
@@ -1247,9 +1346,9 @@ public class GameApp4 {
                             });
                         });
 
-                        loaded_clip.addPrefab("info_manager");
+                        overlay_clip.addPrefab("info_manager");
 
-                        loaded_clip.addJevascript((self) -> {
+                        overlay_clip.addJevascript((self) -> {
                             JevaPrefab clip = (JevaPrefab) self;
 
                             if (vcam == null)
@@ -1764,12 +1863,11 @@ public class GameApp4 {
                         clip.state.setBoolean("leftLevel", true);
                         jevar.setTimeScale(0.25);
                         jevar.setTimeout((state, arg) -> {
-                            jevar.execFunc("calcHighScores");
-                            jevar.useScene("highscoresScene", true);
                             jevar.setTimeScale(1);
+                            jevar.execFunc("loseGame");
 
                             return null;
-                        }, 500);
+                        }, 550);
                     }
 
                     if (jevar.currentClockMillis() - breathTime > breathWait) {
@@ -1997,7 +2095,7 @@ public class GameApp4 {
                             currScene.addPrefab("coin_drop", xPos, yPos).state.setInt("scoreIncrease", scoreIncrease);
                         }
                     } else if (itemType == "heart_drop") {
-                        int amt = JevaUtils.randomInt((arg.length > 2 && arg[2] != null) ? (int) arg[3] : 1);
+                        int amt = JevaUtils.randomInt((arg.length > 2 && arg[2] != null) ? (int) arg[2] : 1);
                         for (int i = 0; i < amt; i++) {
                             double xPos = JevaUtils.randomDouble(leftBound, rightBound);
                             double yPos = JevaUtils.randomDouble(topBound, bottomBound);
@@ -2357,18 +2455,32 @@ public class GameApp4 {
                         });
 
                 scene.addText("Credits:\nMade by Micah Brereton and Carlonn Rivers\nCOMP3609 Game Programming Project",
-                        40, jevar.meta.getScreenHeight() - 40, jevar.meta.getScreenWidth() * 0.8, 65, (t) -> {
+                        40, jevar.meta.getScreenHeight() - 40, 400, 65, (t) -> {
                             JevaText loaded_clip = (JevaText) t;
 
                             loaded_clip.props.setFontSize(20);
 
-                            loaded_clip.props.setAnchorX(0);
                             loaded_clip.props.setAnchorY(1);
 
                             loaded_clip.addJevascript((self) -> {
                                 JevaText clip = (JevaText) self;
 
                                 clip.props._y = jevar.meta.getScreenHeight() - 40;
+                            });
+                        });
+
+                scene.addText(
+                        "Controls:\nF- Toggle Fullscreen\nM- Toggle Mute\nArrows/WASD- Move\nSpace- Shoot\n\nObjective:\nClimb to the top to win!",
+                        100, (jevar.meta.getScreenHeight() - 165) / 2, 200, 245, (t) -> {
+                            JevaText loaded_clip = (JevaText) t;
+
+                            loaded_clip.props.setFontSize(20);
+                            loaded_clip.props.setLineHeight(30);
+
+                            loaded_clip.addJevascript((self) -> {
+                                JevaText clip = (JevaText) self;
+
+                                clip.props._y = (jevar.meta.getScreenHeight() - clip.props._height) / 2;
                             });
                         });
 
@@ -2403,6 +2515,7 @@ public class GameApp4 {
                         JevaText clip = (JevaText) self;
 
                         if (clip.state.getBoolean("isClicked")) {
+                            jevar.state.setString("scoresSceneTitle", "HIGH SCORES");
                             jevar.useScene("highscoresScene", true);
                         }
 
@@ -2431,6 +2544,8 @@ public class GameApp4 {
                     });
                 });
 
+                scene.addPrefab("muteIcon");
+
             });
             jevar.createScene("highscoresScene", (s) -> {
                 JevaScene scene = (JevaScene) s;
@@ -2442,7 +2557,7 @@ public class GameApp4 {
                     loaded_clip.useGraphic("background_cave");
                 });
 
-                final int scoreW = 750;
+                final int scoreW = 800;
                 final int lineH = 30;
 
                 HighScore curScore = (HighScore) jevar.state.getState("currHighschore");
@@ -2472,7 +2587,8 @@ public class GameApp4 {
                         }
                     }
 
-                scene.addText("HIGH SCORES", jevar.meta.getScreenWidth() / 2, 100, jevar.meta.getScreenWidth() * 0.8,
+                scene.addText(jevar.state.getString("scoresSceneTitle", "HIGH SCORES"), jevar.meta.getScreenWidth() / 2,
+                        100, jevar.meta.getScreenWidth() * 0.8,
                         110,
                         (t) -> {
                             JevaText loaded_clip = (JevaText) t;
@@ -2564,21 +2680,21 @@ public class GameApp4 {
                                         * jevar.meta.getScreenHeight();
                             });
                         });
-                scene.addText("Time",
-                        jevar.meta.getScreenWidth() / 2, 250, 130, 350, (t) -> {
+                scene.addText("HH:MM:SS",
+                        jevar.meta.getScreenWidth() / 2, 250, 180, 350, (t) -> {
                             JevaText loaded_text = (JevaText) t;
 
                             loaded_text.props.setFontSize(lineH);
                             loaded_text.props.setAlign("r");
                             loaded_text.state.setDouble("defY", loaded_text.props._y);
 
-                            String scoreText = "Time\n\n";
+                            String scoreText = "HH:MM:SS\n\n";
 
                             int offset = 620;
 
                             for (int i = 0; i < maxHighScores; i++) {
-                                scoreText += ((highScores[i].name.equals(nameLessScore)) ? "- -:- -:- -"
-                                        : highScores[i].duration) + "\n\n";
+                                scoreText += ((highScores[i].name.equals(nameLessScore)) ? "- - -"
+                                        : JevaUtils.msToTime(highScores[i].duration)) + "\n\n";
                             }
                             loaded_text.props._text = scoreText;
 
@@ -2630,6 +2746,8 @@ public class GameApp4 {
                         clip.props._y = loaded_text.state.getDouble("defY") / initHeight * jevar.meta.getScreenHeight();
                     });
                 });
+
+                scene.addPrefab("muteIcon");
 
             });
             jevar.createScene("setNameScene", (s) -> {
@@ -2750,7 +2868,10 @@ public class GameApp4 {
                     });
                 });
 
+                scene.addPrefab("muteIcon");
+
             });
+
             jevar.createScene("gameScene", (s) -> {
                 JevaScene scene = (JevaScene) s;
 
@@ -2764,6 +2885,8 @@ public class GameApp4 {
                 scene.addPrefab("flood").setDepth(floodDepth);
 
                 scene.addPrefab("overlay").setDepth(overlayDepth);
+
+                scene.addPrefab("muteIcon").setDepth(overlayDepth);
 
                 scene.addJevascript((scn) -> {
                     cam1.projection._width = jevar.meta.getScreenWidth();
@@ -2784,26 +2907,25 @@ public class GameApp4 {
                 // core.useScene("gameScene");
                 // }
                 if (!jevar.state.getBoolean("typing")) {
-                    if (key.isReleased("Q")) {
-                        meta.closeApplication();
-                    }
+                    // if (key.isReleased("Q")) {
+                    // meta.closeApplication();
+                    // }
                     // if (key.isReleased("R")) {
                     // core.resetScene();
                     // }
                     if (key.isPressed(JevaKey.Z)) {
                         jevar.debugMode = !jevar.debugMode;
                     }
-                    if (key.isPressed(JevaKey.C)) {
-                        core.alterTimeScale(-0.25);
-                    }
-                    if (key.isPressed(JevaKey.V)) {
-                        core.alterTimeScale(0.25);
-                    }
+                    // if (key.isPressed(JevaKey.C)) {
+                    // core.alterTimeScale(-0.25);
+                    // }
+                    // if (key.isPressed(JevaKey.V)) {
+                    // core.alterTimeScale(0.25);
+                    // }
                     if (key.isPressed(JevaKey.F)) {
                         core.meta.toggleFullscreen();
                     }
                     if (key.isPressed(JevaKey.M)) {
-                        // core.sound
                         if (JevaSound.getMasterVolume() == 1)
                             JevaSound.setMasterVolume(0);
                         else
