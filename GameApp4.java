@@ -199,12 +199,12 @@ public class GameApp4 {
                             {
                                     "eeeeeeeeeeeeeeeeeeeeeeeee",
                                     "e     c eeeeeeeeeeeeeeeee",
-                                    "e      cdeeeeeeeeeeeeeeee",
+                                    "e      cweeeeeeeeeeeeeeee",
                                     "e   c ggeeeeeeeeeeeeeeeee",
                                     "e    ceeeeeeeeeeeeeeeeeee",
-                                    "e c gge          e      e",
-                                    "ec7 eee          e P0   e",
-                                    "egg/eee  4       egggg  e",
+                                    "e c gge          ee     e",
+                                    "ec7 eee          esP0   e",
+                                    "egg/eee  4       eeggg  e",
                                     "e clc eg/gg      eeeee  e",
                                     "ec l6ce l e   g         e",
                                     "egg/gge   e 3 e 2      1e",
@@ -233,23 +233,23 @@ public class GameApp4 {
                             {
                                     "eeeeeeeeeee",
                                     "e  c c ceee",
-                                    "e  2c c dee",
+                                    "e  2c c wee",
                                     "e  gggggeee",
                                     "e  eeeeeeee",
-                                    "e  ee  c  e",
-                                    "e  eec    e",
+                                    "e  ee     e",
+                                    "e  eekk   e",
                                     "e  eegg   e",
                                     "e  eeee   e",
                                     "ec c  c   e",
-                                    "e c c    ce",
+                                    "e c c    ke",
                                     "e/gggggg be",
-                                    "e|eeeeeec e",
+                                    "e|eeeeeek e",
                                     "e|eeeeee  e",
                                     "e     eeb e",
-                                    "e     ee ce",
+                                    "e     ee ke",
                                     "e   c ee  e",
                                     "e    cee be",
-                                    "e   ggeec e",
+                                    "e   ggeek e",
                                     "e   eeee  e",
                                     "e   eeeeb e",
                                     "e   c c c e",
@@ -263,9 +263,9 @@ public class GameApp4 {
                                     "e beeee   e",
                                     "e         e",
                                     "e       1 e",
-                                    "e      ggge",
-                                    "e  P0  eeee",
-                                    "eggggggeeee",
+                                    "egg    ggge",
+                                    "eesP0  eeee",
+                                    "eeeggggeeee",
                                     "eeeeeeeeeee",
                                     "eeeeeeeeeee",
                                     "eeeeeeeeeee",
@@ -279,59 +279,109 @@ public class GameApp4 {
                             } },
                     { { "150" },
                             {
-                                    "eeeeeeeeeeeeeeeeeeeeeeeeee",
-                                    "e c c c eeeeeeeeeeeeeeeeee",
-                                    "ec c c cdeeeeeeeeeeeeeeeee",
-                                    "eg/gggggeeeeeeeeeeeeeeeeee",
-                                    "ee|eeeeeeeeeeeeeeeeeeeeeee",
-                                    "e l                      e",
-                                    "e l                      e",
-                                    "e l     b      b      c  e",
-                                    "e l    SbS     b     c   e",
-                                    "eg/gggggggggggggg   c    e",
-                                    "e l eeeeeeeeeeeeec c     e",
-                                    "e l eeeeeeeeeeeee c  3   e",
-                                    "e   eeeeeeeeeeeeegggggg  e",
-                                    "e t4eeeeeeeeeeeeeel B c  e",
-                                    "eeeeeeeeeeeeeeeeeel  c c e",
-                                    "eeeeeeeeeeeeeeeeeel  gggge",
-                                    "e                el  c Ble",
-                                    "e                el c   le",
-                                    "e      G         eeggg  le",
-                                    "e      gggg 1           le",
-                                    "e      eeeeggg 2        le",
-                                    "e    ggeeeeeeeggggggggggge",
-                                    "e P0 eeeeeeeeeeeeeeeeeeeee",
-                                    "eeeeeeeeeeeeeeeeeeeeeeeeee",
-                                    "eeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "e c c c eeeeeeeeeeeeeeeeeeeeeeee",
+                                    "ec c c cweeeeeeeeeeeeeeeeeeeeeee",
+                                    "eg/gggggeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "ee|eeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "e l                            e",
+                                    "e l                            e",
+                                    "e l                            e",
+                                    "e l     b      b               e",
+                                    "e l    SbS     b               e",
+                                    "eg/gggggeggggggeg              e",
+                                    "e l eeeeeeeeeeeeek k k k  k    e",
+                                    "e l eeeeeeeeeeeee k k3k  k     e",
+                                    "e   eeeeeeeeeeeeeggggggggggggg/e",
+                                    "e t4eeeeeeeeeeeeeel B         le",
+                                    "ebbbeeeeeeeeeeeeeel           le",
+                                    "eeeeeeeeeeeeeeeeeel           le",
+                                    "eeeeeeeeeeeeeeeeeel     kkk   le",
+                                    "eeeeeeeeeeeeeeeeeel  gggggggggge",
+                                    "ee               el          Ble",
+                                    "ee               el           le",
+                                    "ee               el           le",
+                                    "ee               el kkk       le",
+                                    "ee     G         egggggggggg  le",
+                                    "ee     gggg 1                 le",
+                                    "ee     eeeeggg 2   kkk        le",
+                                    "ee   ggeeeeeeeggggggggggggggggge",
+                                    "esP0 eeeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                                    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                             },
                             {
                                     "There are many enemies underground. Avoid them!",
                                     "Press 'Space' to shoot. Destroy the snake!",
-                                    "Look out for flying bats!",
+                                    "Look out for flying bats! They drop fireballs!",
                                     "Skeletons are most dangerous! They shoot arrows!",
                                     "You've found treasure! Well done!",
                             } },
                     { { "120" }, {
                             "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                             "ec c c c c c c c c c c ceeeeeee",
-                            "e c c c c c c c c c c c deeeeee",
-                            "eg/gggggggggggeeeeeeeeeeeeeeeee",
-                            "e l                           e",
+                            "e c c c c c c c c c c c weeeeee",
+                            "eg/gggggggggggggggggggggeeeeeee",
+                            "e l          b      B         e",
                             "e l                           e",
                             "eSl               G           e",
-                            "eggggggggg  bb  ggggggg       e",
-                            "e               eeeeeeeggggg/ge",
-                            "eB              b           lBe",
+                            "eggggggggg  bbb  gggggg       e",
+                            "e                eeeeeeggggg/ge",
+                            "eB               b          lBe",
                             "e                           l e",
-                            "e          0                l e",
+                            "e          0G             G l e",
                             "e       gggggggggggggggggggg/ge",
                             "e       eeeeeeeeeeeeeeeeeeee|ee",
                             "e              eeeeeeeeee   l e",
                             "e   gg         eeeeeeeeee     e",
-                            "e  cee     P   eeeeeeeeee t   e",
-                            "e c ee  gggggggeeeeeeeeeebbb  e",
+                            "e  ceeggggg    eeeeeeeeee t   e",
+                            "e c eeeeeesP   eeeeeeeeeebbb  e",
                             "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                    }, { "Good luck!" } },
+                    { { "240" }, {
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee                ee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  kkkkk         we",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ggg/g        gge",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee     l           e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee     l     ggg   e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee     l  S        e",
+                            "ee                      e                    ggg/gg      e",
+                            "ee                      e                       l        e",
+                            "ee        S             e         kkk           l        e",
+                            "ee t gggggggggggggggggg/e        ggggggggg      l  B     e",
+                            "eebbbeeeeeeeeeeeeeeee  l  G    G     e          l        e",
+                            "eeeeeeeeeeeeeeeeeeeeegggggggggggggggge          l        e",
+                            "eeeeeeeeeeeeeeeeeeeee       e       B         gggg       e",
+                            "eeeeeeeeeeeeeeeeeeeesP      e                            e",
+                            "eeeeeeeeeeeeeeeeeeeeegg     e            G               e",
+                            "eeeeeeeeeeeeeeeeeeeee       e          gg/ggg     kkkkk  e",
+                            "eeeeeeeeeeeeeeeeeeeeekkggg/ge            l       gggggggge",
+                            "eeeeeeeeeeeeeeeeeeeeekke  l  c  c        l  S            e",
+                            "eeeeeeeeeeeeeeeeeeeeekke  l   c          l gggg          e",
+                            "eeeeeeeeeeeeeeeeeeeeekk   lGc  c         l               e",
+                            "eeeeeeeeeeeeeeeeeeeeegggggggggggggg      l               e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee            kkl       gggggggge",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee           ggggggg    e       e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee       G              e     t e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee     ggggg            e    bbbe",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee                      e    ggge",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeekk                 kkkekk     e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeggg               ggggegg     e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee                  eeeeeee     e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeee     gggg                     e",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeekk        G   gg       S   ggge",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeggggggggggggggeegggggggggggeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                     }, { "Good luck!" } },
                     { { "60" }, {
                             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -382,6 +432,7 @@ public class GameApp4 {
 
             jevar.createSpriteSheet("heart_animation", "heart_spritesheet", 4, 16, 0, 8);
 
+            jevar.createSpriteSheet("bat_projectile_animation", "bat_projectile_spritesheet", 3, 16, 0, 6);
             jevar.createSpriteSheet("char_idle_animation", playerSpriteSheet, 4, charAnimationSize, 0, 6);
             jevar.createSpriteSheet("char_jump_animation", playerSpriteSheet, 2, charAnimationSize, 1, 10);
             jevar.createSpriteSheet("char_run_animation", playerSpriteSheet, 6, charAnimationSize, 2, 10);
@@ -439,6 +490,7 @@ public class GameApp4 {
 
                 loaded_clip.setTileEnum('e', "earth", "floor");
                 loaded_clip.setTileEnum('g', "grass", "floor");
+                loaded_clip.setTileEnum('s', "start_door", "floor");
                 loaded_clip.setTileEnum('b', "cave_stone", "floor");
                 loaded_clip.setTileEnum('l', "ladder", "ladder");
                 loaded_clip.setTileEnum('/', "ladder_grass", "ladder_floor");
@@ -464,9 +516,10 @@ public class GameApp4 {
                 loaded_clip.createClipAtTile('B', "bat_baddie", baddieDepth);
                 loaded_clip.createClipAtTile('S', "skele_baddie", baddieDepth);
                 loaded_clip.createClipAtTile('c', "coin_drop", collectibleDepth);
+                loaded_clip.createClipAtTile('k', "coin_float", collectibleDepth);
                 loaded_clip.createClipAtTile('h', "heart_drop", collectibleDepth);
                 loaded_clip.createClipAtTile('t', "treasure", collectibleDepth);
-                loaded_clip.createClipAtTile('d', "door", collectibleDepth);
+                loaded_clip.createClipAtTile('w', "door", collectibleDepth);
 
                 if (infos != null) {
                     for (int i = 0; i < infoLen; i++) {
@@ -600,6 +653,11 @@ public class GameApp4 {
                         clip.remove();
                     }
                 });
+            });
+            jevar.createPrefab("coin_float", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("coin_drop");
+                loaded_clip.state.setBoolean("usesGravity", false);
             });
             jevar.createPrefab("heart_drop", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
@@ -1062,7 +1120,7 @@ public class GameApp4 {
             });
 
             jevar.createFunc("newGame", (state, arg) -> {
-                state.setInt("currLevel", 3);
+                state.setInt("currLevel", 4);
                 state.setLong("timeStartedGame", jevar.currentClockMillis());
                 state.setInt("score", 0);
                 state.setInt("health", state.getInt("maxHealth"));
@@ -1091,7 +1149,7 @@ public class GameApp4 {
             jevar.createPrefab("door", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("collectible");
-                loaded_clip.useGraphic("door_tile_set");
+                loaded_clip.useGraphic("win_door");
                 loaded_clip.state.setBoolean("playerObtained", false);
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
@@ -1784,7 +1842,7 @@ public class GameApp4 {
                 loaded_clip.state.setBoolean("wonGame", false);
                 loaded_clip.state.setBoolean("isUnderwater", false);
 
-                loaded_clip.state.setInt("breathWait", 500);
+                loaded_clip.state.setInt("breathWait", 750);
                 loaded_clip.state.setLong("breathTime", 0);
 
                 loaded_clip.state.setString("hb_diedSound", "game_over_sfx");
@@ -1910,11 +1968,17 @@ public class GameApp4 {
                             clip.props._width / 3, clip.props._height / 3);
                     clip.state.setState("rd_bounds", charBounds);
 
-                    JevaClip projectile = clip.hitTestGet("baddie_projectile");
-                    if (projectile != null && charBounds != null && clip.state.getBoolean("canGetHurt")
-                            && projectile.hitTest(charBounds)) {
+                    JevaClip skele_projectile = clip.hitTestGet("skele_projectile");
+                    if (skele_projectile != null && charBounds != null && clip.state.getBoolean("canGetHurt")
+                            && skele_projectile.hitTest(charBounds)) {
                         clip.state.setBoolean("gotHurt", true);
-                        projectile.remove();
+                        skele_projectile.remove();
+                    }
+                    JevaClip bat_projectile = clip.hitTestGet("bat_projectile");
+                    if (bat_projectile != null && charBounds != null && clip.state.getBoolean("canGetHurt")
+                            && bat_projectile.hitTest(charBounds)) {
+                        clip.state.setBoolean("gotHurt", true);
+                        bat_projectile.remove();
                     }
 
                     clip.state.setLong("breathTime", breathTime);
@@ -2070,6 +2134,41 @@ public class GameApp4 {
                 });
             });
 
+            jevar.createFunc("baddie_drop_item", (state, arg) -> {
+                JevaScene currScene = jevar.getCurrentScene();
+
+                if (currScene == null)
+                    return null;
+
+                String itemType = (String) arg[0];
+                JevaClipProps props = (JevaClipProps) arg[1];
+
+                double leftBound = props._x - (props._width * props.getAnchorX()) - collectibleSize / 2;
+                double topBound = props._y - (props._height * props.getAnchorY());
+                double rightBound = leftBound + props._width;
+                double bottomBound = topBound + props._height - collectibleSize;
+
+                if (itemType == "coin_drop") {
+                    int minAmt = (arg.length > 3 && arg[3] != null) ? (int) arg[3] : 1;
+                    int amt = JevaUtils.randomInt(2) + minAmt;
+                    int scoreIncrease = (arg.length > 2 && arg[2] != null) ? (int) arg[2] : 10;
+                    for (int i = 0; i < amt; i++) {
+                        double xPos = JevaUtils.randomDouble(leftBound, rightBound);
+                        double yPos = JevaUtils.randomDouble(topBound, bottomBound);
+                        currScene.addPrefab("coin_drop", xPos, yPos).state.setInt("scoreIncrease", scoreIncrease);
+                    }
+                } else if (itemType == "heart_drop") {
+                    int amt = JevaUtils.randomInt((arg.length > 2 && arg[2] != null) ? (int) arg[2] : 1);
+                    for (int i = 0; i < amt; i++) {
+                        double xPos = JevaUtils.randomDouble(leftBound, rightBound);
+                        double yPos = JevaUtils.randomDouble(topBound, bottomBound);
+                        currScene.addPrefab("heart_drop", xPos, yPos);
+                    }
+                }
+
+                return null;
+            });
+
             jevar.createPrefab("skele_baddie", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("ground_baddie").extend("dynamic_sound");
@@ -2091,41 +2190,6 @@ public class GameApp4 {
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
 
                 final int sightDistance = 5;
-
-                jevar.createFunc("baddie_drop_item", (state, arg) -> {
-                    JevaScene currScene = jevar.getCurrentScene();
-
-                    if (currScene == null)
-                        return null;
-
-                    String itemType = (String) arg[0];
-                    JevaClipProps props = (JevaClipProps) arg[1];
-
-                    double leftBound = props._x - (props._width * props.getAnchorX()) - collectibleSize / 2;
-                    double topBound = props._y - (props._height * props.getAnchorY());
-                    double rightBound = leftBound + props._width;
-                    double bottomBound = topBound + props._height - collectibleSize;
-
-                    if (itemType == "coin_drop") {
-                        int minAmt = (arg.length > 3 && arg[3] != null) ? (int) arg[3] : 1;
-                        int amt = JevaUtils.randomInt(2) + minAmt;
-                        int scoreIncrease = (arg.length > 2 && arg[2] != null) ? (int) arg[2] : 10;
-                        for (int i = 0; i < amt; i++) {
-                            double xPos = JevaUtils.randomDouble(leftBound, rightBound);
-                            double yPos = JevaUtils.randomDouble(topBound, bottomBound);
-                            currScene.addPrefab("coin_drop", xPos, yPos).state.setInt("scoreIncrease", scoreIncrease);
-                        }
-                    } else if (itemType == "heart_drop") {
-                        int amt = JevaUtils.randomInt((arg.length > 2 && arg[2] != null) ? (int) arg[2] : 1);
-                        for (int i = 0; i < amt; i++) {
-                            double xPos = JevaUtils.randomDouble(leftBound, rightBound);
-                            double yPos = JevaUtils.randomDouble(topBound, bottomBound);
-                            currScene.addPrefab("heart_drop", xPos, yPos);
-                        }
-                    }
-
-                    return null;
-                });
 
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
@@ -2177,12 +2241,12 @@ public class GameApp4 {
 
                                 jevar.getSound("baddie_shoot_sfx").playOnce();
 
-                                JevaPrefab projectile = (JevaPrefab) currScene.addPrefab("baddie_projectile",
+                                JevaPrefab baddie_projectile = (JevaPrefab) currScene.addPrefab("skele_projectile",
                                         clip.props._x, clip.props._y - (clip.props._height), 40, 40);
                                 if (clip.props._scaleX > 0)
-                                    projectile.state.setBoolean("goingRight", true);
+                                    baddie_projectile.state.setBoolean("goingRight", true);
                                 else
-                                    projectile.state.setBoolean("goingLeft", true);
+                                    baddie_projectile.state.setBoolean("goingLeft", true);
                             }
                         }
 
@@ -2205,7 +2269,13 @@ public class GameApp4 {
                 loaded_clip.state.setInt("maxXSpeed", 250);
                 loaded_clip.useSpriteSheet("bat_baddie_fly_animation");
 
+                loaded_clip.state.setBoolean("seeingChar", false);
+                loaded_clip.state.setLong("shootTime", 0);
+                loaded_clip.state.setInt("shootWait", 1500);
+
                 JevaPrefab mainChar = (JevaPrefab) loaded_clip.state.getState("mainChar");
+
+                final int sightDistance = 5;
 
                 loaded_clip.addJevascript((self) -> {
                     JevaPrefab clip = (JevaPrefab) self;
@@ -2214,6 +2284,10 @@ public class GameApp4 {
                     boolean goingRight = clip.state.getBoolean("goingRight");
                     boolean touchingLeftWall = clip.state.getBoolean("touchingLeftWall");
                     boolean touchingRightWall = clip.state.getBoolean("touchingRightWall");
+
+                    boolean seeingChar = clip.state.getBoolean("seeingChar");
+                    long shootTime = clip.state.getLong("shootTime");
+                    int shootWait = clip.state.getInt("shootWait");
 
                     if (isAlive) {
                         if (goingLeft && touchingLeftWall) {
@@ -2234,6 +2308,43 @@ public class GameApp4 {
                             clip.state.setBoolean("gotHurt", true);
                             projectile.remove();
                         }
+
+                        JevaTileMap map = (JevaTileMap) jevar.getJevaClip("worldMap");
+
+                        if (map != null && mainChar != null) {
+                            int myTileY = map.pixelsToTilesY(clip.props._y - clip.props._height / 2);
+                            int myTileX = map.pixelsToTilesX(clip.props._x);
+                            int charTileY = map.pixelsToTilesY(mainChar.props._y - mainChar.props._height / 2);
+                            int charTileX = map.pixelsToTilesX(mainChar.props._x);
+
+                            if (myTileX == charTileX) {
+
+                                int reach = myTileY + sightDistance;
+
+                                int rangeTop = Math.min(reach, myTileY);
+                                int rangeBottom = Math.max(reach, myTileY);
+
+                                if (charTileY >= rangeTop && charTileY <= rangeBottom) {
+                                    seeingChar = true;
+                                } else {
+                                    seeingChar = false;
+                                }
+                            } else {
+                                seeingChar = false;
+                            }
+
+                            if (seeingChar && jevar.currentClockMillis() - shootTime > shootWait
+                                    && Math.random() > 0.9) {
+                                shootTime = jevar.currentClockMillis();
+
+                                JevaScene currScene = jevar.getCurrentScene();
+
+                                jevar.getSound("baddie_shoot_sfx").playOnce();
+
+                                JevaPrefab baddie_projectile = (JevaPrefab) currScene.addPrefab("bat_projectile",
+                                        clip.props._x, clip.props._y - (clip.props._height), 40, 40);
+                            }
+                        }
                     } else {
                         goingLeft = false;
                         goingRight = false;
@@ -2247,6 +2358,8 @@ public class GameApp4 {
                         }
                     }
 
+                    clip.state.setBoolean("seeingChar", seeingChar);
+                    clip.state.setLong("shootTime", shootTime);
                     clip.state.setBoolean("goingLeft", goingLeft);
                     clip.state.setBoolean("goingRight", goingRight);
                     clip.state.setBoolean("touchingLeftWall", touchingLeftWall);
@@ -2281,11 +2394,23 @@ public class GameApp4 {
                 loaded_clip.useGraphic("player_projectile");
             });
 
-            jevar.createPrefab("baddie_projectile", (loaded_self) -> {
+            jevar.createPrefab("skele_projectile", (loaded_self) -> {
                 JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
                 loaded_clip.extend("projectile");
 
-                loaded_clip.useGraphic("baddie_projectile");
+                loaded_clip.useGraphic("skele_projectile");
+            });
+
+            jevar.createPrefab("bat_projectile", (loaded_self) -> {
+                JevaPrefab loaded_clip = (JevaPrefab) loaded_self;
+                loaded_clip.extend("projectile");
+
+                loaded_clip.state.setBoolean("goingRight", false);
+                loaded_clip.state.setBoolean("goingLeft", false);
+                loaded_clip.state.setBoolean("usesGravity", true);
+                loaded_clip.state.setInt("maxFallSpeed", 250);
+
+                loaded_clip.useSpriteSheet("bat_projectile_animation");
             });
 
             jevar.createPrefab("background", 0, 0, jevar.meta.getScreenWidth(), jevar.meta.getScreenHeight(),
